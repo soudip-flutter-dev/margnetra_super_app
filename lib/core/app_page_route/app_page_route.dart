@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:margnetra_super_app/pages/splash_screen/splash_screen.dart';
 
 class AppPageRoute {
   static const String splashPage = '/splash';
@@ -9,5 +10,6 @@ class AppPageRoute {
   
   
   static Map<String, WidgetBuilder> get mRoutes => {
+        splashPage: (context) => const MargNetraSplash(),
          };
 }
