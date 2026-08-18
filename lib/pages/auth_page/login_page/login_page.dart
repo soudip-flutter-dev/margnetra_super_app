@@ -106,8 +106,8 @@ class LoginPage extends StatelessWidget {
                               : Icons.visibility_off_outlined,
                           onPressIcon: () {
                             ss(() {
-                              // isPasswordVisible = !isPasswordVisible;
-                              // isObscurePasswordText = !isObscurePasswordText;
+                              isPasswordVisible = !isPasswordVisible;
+                              isObscurePasswordText = !isObscurePasswordText;
                             });
                           },
                           validator: (value) {
@@ -153,6 +153,10 @@ class LoginPage extends StatelessWidget {
                             // backgroundColor:  AppColors.primaryHudCyan,
 
                             onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                AppPageRoute.navigationHomePage,
+                              );
                               // if (_formKey.currentState!.validate()) {
                               //   context.read<AuthBloc>().add(
                               //     LoginEvent(
