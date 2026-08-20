@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class RoadAndCarPainter extends CustomPainter {
@@ -14,46 +13,20 @@ class RoadAndCarPainter extends CustomPainter {
     // -------------------------------------------------------------------------
 
     final roadPath = Path()
-      ..moveTo(
-        centerX - size.width * .045,
-        horizonY,
-      )
-      ..lineTo(
-        centerX + size.width * .045,
-        horizonY,
-      )
-      ..lineTo(
-        size.width * .80,
-        bottomY,
-      )
-      ..lineTo(
-        size.width * .20,
-        bottomY,
-      )
+      ..moveTo(centerX - size.width * .045, horizonY)
+      ..lineTo(centerX + size.width * .045, horizonY)
+      ..lineTo(size.width * .80, bottomY)
+      ..lineTo(size.width * .20, bottomY)
       ..close();
 
     final roadPaint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [
-          Color(0x00070D11),
-          Color(0xFF071117),
-          Color(0xFF04080B),
-        ],
-      ).createShader(
-        Rect.fromLTWH(
-          0,
-          0,
-          size.width,
-          size.height,
-        ),
-      );
+        colors: [Color(0x00070D11), Color(0xFF071117), Color(0xFF04080B)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    canvas.drawPath(
-      roadPath,
-      roadPaint,
-    );
+    canvas.drawPath(roadPath, roadPaint);
 
     // -------------------------------------------------------------------------
     // Perspective road edges
@@ -64,26 +37,14 @@ class RoadAndCarPainter extends CustomPainter {
       ..strokeWidth = .8;
 
     canvas.drawLine(
-      Offset(
-        centerX - size.width * .045,
-        horizonY,
-      ),
-      Offset(
-        size.width * .20,
-        bottomY,
-      ),
+      Offset(centerX - size.width * .045, horizonY),
+      Offset(size.width * .20, bottomY),
       edgePaint,
     );
 
     canvas.drawLine(
-      Offset(
-        centerX + size.width * .045,
-        horizonY,
-      ),
-      Offset(
-        size.width * .80,
-        bottomY,
-      ),
+      Offset(centerX + size.width * .045, horizonY),
+      Offset(size.width * .80, bottomY),
       edgePaint,
     );
 
@@ -129,13 +90,7 @@ class RoadAndCarPainter extends CustomPainter {
     // Car
     // -------------------------------------------------------------------------
 
-    _drawCar(
-      canvas,
-      Offset(
-        centerX,
-        size.height * .69,
-      ),
-    );
+    _drawCar(canvas, Offset(centerX, size.height * .69));
   }
 
   // ===========================================================================
@@ -166,23 +121,15 @@ class RoadAndCarPainter extends CustomPainter {
       final startProgress = .20 + i * .17;
       final endProgress = startProgress + .065;
 
-      final x1 = centerX +
-          (baseX - centerX) * startProgress;
+      final x1 = centerX + (baseX - centerX) * startProgress;
 
-      final y1 = horizonY +
-          (size.height - horizonY) * startProgress;
+      final y1 = horizonY + (size.height - horizonY) * startProgress;
 
-      final x2 = centerX +
-          (baseX - centerX) * endProgress;
+      final x2 = centerX + (baseX - centerX) * endProgress;
 
-      final y2 = horizonY +
-          (size.height - horizonY) * endProgress;
+      final y2 = horizonY + (size.height - horizonY) * endProgress;
 
-      canvas.drawLine(
-        Offset(x1, y1),
-        Offset(x2, y2),
-        paint,
-      );
+      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), paint);
     }
   }
 
@@ -190,168 +137,178 @@ class RoadAndCarPainter extends CustomPainter {
   // CAR
   // ===========================================================================
 
-  void _drawCar(
-    Canvas canvas,
-    Offset center,
-  ) {
-    const width = 48.0;
-    const height = 26.0;
+  void _drawCar(Canvas canvas, Offset center) {
+    const width = 54.0;
 
-    // Car glow
-    final glowPaint = Paint()
-      ..color = const Color(0xFF00D9FF).withOpacity(.30)
-      ..maskFilter = const MaskFilter.blur(
-        BlurStyle.normal,
-        9,
-      );
-
+    // Ground glow and wheels sit behind the front body.
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(
-          center.dx,
-          center.dy + 8,
-        ),
-        width: width,
+        center: Offset(center.dx, center.dy + 13),
+        width: width + 8,
         height: 13,
       ),
-      glowPaint,
+      Paint()
+        ..color = const Color(0xFF00D9FF).withOpacity(.28)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9),
     );
 
-    // -------------------------------------------------------------------------
-    // Car body
-    // -------------------------------------------------------------------------
+    final wheelPaint = Paint()..color = const Color(0xFF020609);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(center.dx - 22, center.dy + 5),
+        width: 7,
+        height: 15,
+      ),
+      wheelPaint,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(center.dx + 22, center.dy + 5),
+        width: 7,
+        height: 15,
+      ),
+      wheelPaint,
+    );
 
+    // Symmetrical front body: narrow roof, broad shoulders, rounded bumper.
     final bodyPath = Path()
-      ..moveTo(
-        center.dx - width * .48,
-        center.dy + 7,
+      ..moveTo(center.dx - 18, center.dy - 14)
+      ..quadraticBezierTo(
+        center.dx - 24,
+        center.dy - 7,
+        center.dx - 25,
+        center.dy + 2,
       )
-      ..lineTo(
-        center.dx - width * .36,
-        center.dy - 5,
+      ..lineTo(center.dx - 27, center.dy + 9)
+      ..quadraticBezierTo(
+        center.dx - 26,
+        center.dy + 14,
+        center.dx - 20,
+        center.dy + 15,
       )
-      ..lineTo(
-        center.dx - width * .20,
-        center.dy - 11,
+      ..lineTo(center.dx + 20, center.dy + 15)
+      ..quadraticBezierTo(
+        center.dx + 26,
+        center.dy + 14,
+        center.dx + 27,
+        center.dy + 9,
       )
-      ..lineTo(
-        center.dx + width * .20,
-        center.dy - 11,
-      )
-      ..lineTo(
-        center.dx + width * .36,
-        center.dy - 5,
-      )
-      ..lineTo(
-        center.dx + width * .48,
-        center.dy + 7,
+      ..lineTo(center.dx + 25, center.dy + 2)
+      ..quadraticBezierTo(
+        center.dx + 24,
+        center.dy - 7,
+        center.dx + 18,
+        center.dy - 14,
       )
       ..close();
 
     final bodyPaint = Paint()
-      ..color = const Color(0xFF071218);
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF183944), Color(0xFF071218), Color(0xFF02080C)],
+      ).createShader(Rect.fromCenter(center: center, width: width, height: 32));
 
+    canvas.drawPath(bodyPath, bodyPaint);
     canvas.drawPath(
       bodyPath,
-      bodyPaint,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.1
+        ..color = const Color(0xFF20DDF4).withOpacity(.9),
     );
 
-    // Body outline
-    final outlinePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = const Color(0xFF20DDF4).withOpacity(.9);
-
-    canvas.drawPath(
-      bodyPath,
-      outlinePaint,
-    );
-
-    // -------------------------------------------------------------------------
-    // Windshield
-    // -------------------------------------------------------------------------
-
-    final windshieldPath = Path()
-      ..moveTo(
-        center.dx - 9,
-        center.dy - 8,
+    // Split windshield and roof glass show which side is the front of the car.
+    final glassPath = Path()
+      ..moveTo(center.dx - 15, center.dy - 11)
+      ..quadraticBezierTo(
+        center.dx,
+        center.dy - 16,
+        center.dx + 15,
+        center.dy - 11,
       )
-      ..lineTo(
-        center.dx + 9,
-        center.dy - 8,
-      )
-      ..lineTo(
-        center.dx + 13,
-        center.dy - 2,
-      )
-      ..lineTo(
-        center.dx - 13,
-        center.dy - 2,
-      )
+      ..lineTo(center.dx + 12, center.dy - 2)
+      ..lineTo(center.dx - 12, center.dy - 2)
       ..close();
 
     canvas.drawPath(
-      windshieldPath,
-      Paint()..color = const Color(0xFF0A2A34),
+      glassPath,
+      Paint()..color = const Color(0xFF0A2D38).withOpacity(.95),
     );
-
     canvas.drawPath(
-      windshieldPath,
+      glassPath,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = .6
-        ..color = const Color(0xFF35E7FA).withOpacity(.55),
+        ..strokeWidth = .8
+        ..color = const Color(0xFF55E9F8).withOpacity(.65),
+    );
+    canvas.drawLine(
+      Offset(center.dx, center.dy - 12),
+      Offset(center.dx, center.dy - 3),
+      Paint()
+        ..color = const Color(0xFF55E9F8).withOpacity(.4)
+        ..strokeWidth = .7,
     );
 
-    // -------------------------------------------------------------------------
-    // Headlights
-    // -------------------------------------------------------------------------
+    // Side mirrors add a recognizable car silhouette.
+    final mirrorPaint = Paint()
+      ..color = const Color(0xFF35E7FA).withOpacity(.8);
+    canvas.drawCircle(Offset(center.dx - 26, center.dy - 2), 2, mirrorPaint);
+    canvas.drawCircle(Offset(center.dx + 26, center.dy - 2), 2, mirrorPaint);
 
+    // Hood crease and front grille.
+    final detailPaint = Paint()
+      ..color = const Color(0xFF35E7FA).withOpacity(.42)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .8;
+    canvas.drawLine(
+      Offset(center.dx - 15, center.dy + 1),
+      Offset(center.dx + 15, center.dy + 1),
+      detailPaint,
+    );
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(center.dx, center.dy + 9),
+          width: 16,
+          height: 4,
+        ),
+        const Radius.circular(2),
+      ),
+      Paint()..color = const Color(0xFF35E7FA).withOpacity(.58),
+    );
+
+    // Bright front headlights and a thin lower bumper complete the face.
     final headlightGlow = Paint()
       ..color = const Color(0xFF00D9FF).withOpacity(.9)
-      ..maskFilter = const MaskFilter.blur(
-        BlurStyle.normal,
-        5,
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+    final headlightCore = Paint()..color = Colors.white;
+
+    for (final x in [-17.0, 17.0]) {
+      final lightCenter = Offset(center.dx + x, center.dy + 6);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: lightCenter, width: 6, height: 3.5),
+          const Radius.circular(1.5),
+        ),
+        headlightGlow,
       );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: lightCenter, width: 3.5, height: 1.5),
+          const Radius.circular(.75),
+        ),
+        headlightCore,
+      );
+    }
 
-    canvas.drawCircle(
-      Offset(
-        center.dx - 17,
-        center.dy + 5,
-      ),
-      2.2,
-      headlightGlow,
-    );
-
-    canvas.drawCircle(
-      Offset(
-        center.dx + 17,
-        center.dy + 5,
-      ),
-      2.2,
-      headlightGlow,
-    );
-
-    // Bright headlight core
-    final headlightCore = Paint()
-      ..color = Colors.white;
-
-    canvas.drawCircle(
-      Offset(
-        center.dx - 17,
-        center.dy + 5,
-      ),
-      1,
-      headlightCore,
-    );
-
-    canvas.drawCircle(
-      Offset(
-        center.dx + 17,
-        center.dy + 5,
-      ),
-      1,
-      headlightCore,
+    canvas.drawLine(
+      Offset(center.dx - 20, center.dy + 14),
+      Offset(center.dx + 20, center.dy + 14),
+      Paint()
+        ..color = const Color(0xFF20DDF4).withOpacity(.85)
+        ..strokeWidth = 1.2,
     );
   }
 
