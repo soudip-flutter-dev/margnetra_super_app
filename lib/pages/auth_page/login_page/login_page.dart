@@ -16,7 +16,7 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return 
     Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       body: Container(
         height: double.infinity,
         width: double.infinity,

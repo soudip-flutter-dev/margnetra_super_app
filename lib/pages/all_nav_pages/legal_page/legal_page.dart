@@ -4,9 +4,14 @@ import 'package:flutter/material.dart';
 ///
 /// Designed to be embedded inside an existing navigation shell.
 /// No Scaffold, AppBar, or BottomNavigationBar is included.
-class LegalVaultWidget extends StatelessWidget {
+class LegalVaultWidget extends StatefulWidget {
   const LegalVaultWidget({super.key});
 
+  @override
+  State<LegalVaultWidget> createState() => _LegalVaultWidgetState();
+}
+
+class _LegalVaultWidgetState extends State<LegalVaultWidget> {
   // ---------------------------------------------------------------------------
   // Theme colors
   // ---------------------------------------------------------------------------
@@ -41,6 +46,25 @@ class LegalVaultWidget extends StatelessWidget {
       'hash': '7c2e21...b21f1',
     },
   ];
+
+  static const List<String> _eventTypes = [
+    'All Events',
+    'Accident',
+    'Harsh Braking',
+    'Over Speeding',
+  ];
+
+  String _selectedEventType = 'All Events';
+
+  List<Map<String, String>> get _visibleEvents {
+    if (_selectedEventType == 'All Events') {
+      return _events;
+    }
+
+    return _events
+        .where((event) => event['type'] == _selectedEventType)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +106,7 @@ class LegalVaultWidget extends StatelessWidget {
               // ----------------------------------------------------------------
               // Event cards
               // ----------------------------------------------------------------
-              ..._events.map(
+              ..._visibleEvents.map(
                 (event) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _buildEventCard(event),
@@ -122,35 +146,46 @@ class LegalVaultWidget extends StatelessWidget {
   // "All Events" dropdown pill
   // ---------------------------------------------------------------------------
   Widget _buildEventFilter() {
-    return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF111117),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFF303039),
-          width: 1,
+    return PopupMenuButton<String>(
+      tooltip: 'Filter events',
+      onSelected: (eventType) {
+        setState(() {
+          _selectedEventType = eventType;
+        });
+      },
+      itemBuilder: (context) => _eventTypes
+          .map(
+            (eventType) =>
+                PopupMenuItem<String>(value: eventType, child: Text(eventType)),
+          )
+          .toList(),
+      child: Container(
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111117),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFF303039), width: 1),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'All Events',
-            style: TextStyle(
-              color: Color(0xFFD1D1D7),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _selectedEventType,
+              style: const TextStyle(
+                color: Color(0xFFD1D1D7),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          const SizedBox(width: 6),
-          Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 17,
-            color: _secondaryText,
-          ),
-        ],
+            const SizedBox(width: 6),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 17,
+              color: _secondaryText,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -165,10 +200,7 @@ class LegalVaultWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: _cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _borderColor,
-          width: 1,
-        ),
+        border: Border.all(color: _borderColor, width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,18 +304,11 @@ class LegalVaultWidget extends StatelessWidget {
       height: 60,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(9),
-        border: Border.all(
-          color: const Color(0xFF2B2B34),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFF2B2B34), width: 1),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF202832),
-            Color(0xFF0D141B),
-            Color(0xFF07090D),
-          ],
+          colors: [Color(0xFF202832), Color(0xFF0D141B), Color(0xFF07090D)],
         ),
       ),
       child: Stack(
@@ -348,19 +373,13 @@ class LegalVaultWidget extends StatelessWidget {
   // ---------------------------------------------------------------------------
   // Bottom outlined action button
   // ---------------------------------------------------------------------------
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-  }) {
+  Widget _buildActionButton({required String label, required IconData icon}) {
     return Container(
       height: 52,
       decoration: BoxDecoration(
         color: const Color(0xFF0D1115),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: _cyan.withOpacity(0.75),
-          width: 1,
-        ),
+        border: Border.all(color: _cyan.withOpacity(0.75), width: 1),
       ),
       child: Material(
         color: Colors.transparent,
@@ -376,11 +395,7 @@ class LegalVaultWidget extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  icon,
-                  color: _cyan,
-                  size: 16,
-                ),
+                Icon(icon, color: _cyan, size: 16),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(

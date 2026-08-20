@@ -24,7 +24,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   Widget build(BuildContext context) {
     return 
     Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Center(

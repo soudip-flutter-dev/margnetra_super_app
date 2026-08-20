@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:margnetra_super_app/pages/auth_page/login_page/login_page.dart';
 import 'package:margnetra_super_app/pages/auth_page/registration_page/registration_page.dart';
+import 'package:margnetra_super_app/pages/emergency_sos_page/emergency_sos_page.dart';
 import 'package:margnetra_super_app/pages/intro_slider_page/intro_slider_page.dart';
 import 'package:margnetra_super_app/pages/navigation_home_page/navigation_home_page.dart';
 import 'package:margnetra_super_app/pages/splash_screen/splash_screen.dart';
@@ -11,7 +12,7 @@ class AppPageRoute {
   static const String loginPage = '/login';
   static const String registrationPage = '/registration';
   static const String navigationHomePage = '/navigationHome';
-  // static const String bottomNavBar = '/bottomNavBar';
+  static const String emergencySosPage = '/emergencySos';
 
   
   
@@ -21,5 +22,6 @@ class AppPageRoute {
         loginPage: (context) => LoginPage(),
         registrationPage: (context) => RegistrationPage(),
         navigationHomePage: (context) => NavigationHomePage(),
+        emergencySosPage: (context) =>  EmergencySosWidget(),
          };
 }
