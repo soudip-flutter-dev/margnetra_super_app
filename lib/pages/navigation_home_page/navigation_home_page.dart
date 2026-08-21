@@ -3,8 +3,10 @@ import 'package:margnetra_super_app/core/utils/app_colors.dart';
 import 'package:margnetra_super_app/pages/all_nav_pages/bluetooth_connect_cab_page/bluetooth_connect_cab_page.dart';
 import 'package:margnetra_super_app/pages/all_nav_pages/digilocker_page/digilocker_page.dart';
 import 'package:margnetra_super_app/pages/all_nav_pages/e_chalan_page/e_chalan_page.dart';
+import 'package:margnetra_super_app/pages/all_nav_pages/family_circle_page/family_circle_page.dart';
 import 'package:margnetra_super_app/pages/all_nav_pages/legal_page/legal_page.dart';
 import 'package:margnetra_super_app/pages/all_nav_pages/wallet_page/wallet_page.dart';
+import 'package:margnetra_super_app/pages/profile_page/profile_page.dart';
 
 class NavigationHomePage extends StatefulWidget {
   const NavigationHomePage({super.key});
@@ -23,8 +25,8 @@ class _NavigationHomePageState extends State<NavigationHomePage> {
     EChallanWidget(),
     LegalVaultWidget(),
     DigiLockerWidget(),
-    const Center(child: Text('Settings Page')),
-    const Center(child: Text('More Page')),
+    FamilyCirclePage(),
+    ProfileWidget(),
   ];
   @override
   Widget build(BuildContext context) {
@@ -69,8 +71,8 @@ class _NavigationHomePageState extends State<NavigationHomePage> {
           NavigationDestination(icon: Icon(Icons.drive_eta_outlined),label: 'Drive',),
           NavigationDestination(icon: Icon(Icons.luggage_outlined),label: 'Legal',),
           NavigationDestination(icon: Icon(Icons.history), label: 'Digiloker'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Family'),
-          // NavigationDestination(icon: Icon(Icons.more_horiz), label: 'More'),
+          NavigationDestination(icon: Icon(Icons.group), label: 'Family'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
         ],
         backgroundColor: AppColors.surface,
         height: 65,

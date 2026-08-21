@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:margnetra_super_app/core/app_page_route/app_page_route.dart';
 import 'package:margnetra_super_app/core/utils/app_colors.dart';
 
 class BountyCapture extends StatelessWidget {
@@ -6,11 +7,11 @@ class BountyCapture extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _buildBountyButton();
+    return _buildBountyButton(context);
   }
 
   
-  Widget _buildBountyButton() {
+  Widget _buildBountyButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       height: 48,
@@ -27,6 +28,7 @@ class BountyCapture extends StatelessWidget {
         ),
         child: ElevatedButton(
           onPressed: () {
+            Navigator.pushNamed(context, AppPageRoute.bountyCapturePage);
             
           },
           style: ElevatedButton.styleFrom(
