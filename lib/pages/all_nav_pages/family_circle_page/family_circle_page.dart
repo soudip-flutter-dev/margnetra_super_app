@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 
-class FamilyCirclePage extends StatelessWidget {
+class FamilyCirclePage extends StatefulWidget {
   const FamilyCirclePage({super.key});
+
+  @override
+  State<FamilyCirclePage> createState() => _FamilyCirclePageState();
+}
+
+class _FamilyCirclePageState extends State<FamilyCirclePage> {
+  bool _isMapView = true;
 
   // ---------------------------------------------------------------------------
   // Colors
@@ -44,18 +51,12 @@ class FamilyCirclePage extends StatelessWidget {
               // ----------------------------------------------------------------
               _buildViewToggle(),
 
-              const SizedBox(height: 16),
+              if (_isMapView) ...[
+                const SizedBox(height: 16),
 
-              // ----------------------------------------------------------------
-              // Map placeholder
-              //
-              // Replace this section with GoogleMap when integrating:
-              // GoogleMap(
-              //   initialCameraPosition: ...,
-              //   markers: ...,
-              // )
-              // ----------------------------------------------------------------
-              _buildMap(),
+                // Replace this section with GoogleMap when integrating.
+                _buildMap(),
+              ],
 
               const SizedBox(height: 16),
 
@@ -105,27 +106,31 @@ class FamilyCirclePage extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF15191E),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(
-          color: borderColor,
-          width: 1,
-        ),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Row(
         children: [
           // Selected Map View
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: cyanColor,
-                borderRadius: BorderRadius.circular(21),
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                'Map View',
-                style: TextStyle(
-                  color: Color(0xFF061313),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+            child: GestureDetector(
+              onTap: () {
+                setState(() => _isMapView = true);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _isMapView ? cyanColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(21),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'Map View',
+                  style: TextStyle(
+                    color: _isMapView
+                        ? const Color(0xFF061313)
+                        : const Color(0xFF9AA3AB),
+                    fontSize: 14,
+                    fontWeight: _isMapView ? FontWeight.w700 : FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -133,14 +138,25 @@ class FamilyCirclePage extends StatelessWidget {
 
           // Unselected List View
           Expanded(
-            child: Container(
-              alignment: Alignment.center,
-              child: const Text(
-                'List View',
-                style: TextStyle(
-                  color: Color(0xFF9AA3AB),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+            child: GestureDetector(
+              onTap: () {
+                setState(() => _isMapView = false);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _isMapView ? Colors.transparent : cyanColor,
+                  borderRadius: BorderRadius.circular(21),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'List View',
+                  style: TextStyle(
+                    color: _isMapView
+                        ? const Color(0xFF9AA3AB)
+                        : const Color(0xFF061313),
+                    fontSize: 14,
+                    fontWeight: _isMapView ? FontWeight.w600 : FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -161,36 +177,24 @@ class FamilyCirclePage extends StatelessWidget {
       decoration: BoxDecoration(
         color: mapColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: borderColor,
-          width: 1,
-        ),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Stack(
         children: [
           // Dark map/grid background
-          Positioned.fill(
-            child: CustomPaint(
-              painter: MapPlaceholderPainter(),
-            ),
-          ),
+          Positioned.fill(child: CustomPaint(painter: MapPlaceholderPainter())),
 
           // Small map labels / road information
           const Positioned(
             left: 18,
             top: 20,
-            child: _MapLabel(
-              text: 'FAMILY ZONE',
-            ),
+            child: _MapLabel(text: 'FAMILY ZONE'),
           ),
 
           const Positioned(
             right: 18,
             bottom: 20,
-            child: _MapLabel(
-              text: 'LIVE',
-              showDot: true,
-            ),
+            child: _MapLabel(text: 'LIVE', showDot: true),
           ),
 
           // Family member map marker #1
@@ -229,17 +233,12 @@ class FamilyCirclePage extends StatelessWidget {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 13,
-        vertical: 13,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isActive
-              ? const Color(0xFF1D4743)
-              : borderColor,
+          color: isActive ? const Color(0xFF1D4743) : borderColor,
           width: 1,
         ),
       ),
@@ -270,9 +269,7 @@ class FamilyCirclePage extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              color: isActive
-                  ? cyanColor
-                  : const Color(0xFF9BA4AA),
+              color: isActive ? cyanColor : const Color(0xFF9BA4AA),
               size: 24,
             ),
           ),
@@ -372,10 +369,7 @@ class _MapAvatarMarker extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _MapAvatarMarker({
-    required this.icon,
-    required this.color,
-  });
+  const _MapAvatarMarker({required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -402,20 +396,14 @@ class _MapAvatarMarker extends StatelessWidget {
               shape: BoxShape.circle,
               color: Color(0xFF182124),
             ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 23,
-            ),
+            child: Icon(icon, color: Colors.white, size: 23),
           ),
         ),
 
         // Small pin tail
         CustomPaint(
           size: const Size(12, 8),
-          painter: MarkerTailPainter(
-            color: color,
-          ),
+          painter: MarkerTailPainter(color: color),
         ),
       ],
     );
@@ -430,24 +418,16 @@ class _MapLabel extends StatelessWidget {
   final String text;
   final bool showDot;
 
-  const _MapLabel({
-    required this.text,
-    this.showDot = false,
-  });
+  const _MapLabel({required this.text, this.showDot = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.28),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.06),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -603,9 +583,7 @@ class MapPlaceholderPainter extends CustomPainter {
 class MarkerTailPainter extends CustomPainter {
   final Color color;
 
-  MarkerTailPainter({
-    required this.color,
-  });
+  MarkerTailPainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
