@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:margnetra_super_app/core/app_page_route/app_page_route.dart';
-import 'package:margnetra_super_app/pages/splash_screen/splash_screen.dart';
-import 'dart:math' as math;
+
 // import 'package:flutter/material.dart';
 void main() {
   runApp(const MyApp());

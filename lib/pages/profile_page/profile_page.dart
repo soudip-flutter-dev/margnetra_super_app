@@ -15,11 +15,16 @@ class ProfileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      body: 
+    Container(
       color: backgroundColor,
+      
       child: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          // physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,7 +109,11 @@ class ProfileWidget extends StatelessWidget {
           ),
         ),
       ),
+    )
+  
+  ,
     );
+    
   }
 
   // ------------------------------------------------------------------------
