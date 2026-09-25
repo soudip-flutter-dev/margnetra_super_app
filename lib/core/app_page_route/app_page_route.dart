@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:margnetra_super_app/pages/all_nav_pages/bluetooth_connect_cab_page/bluetooth_scan_page.dart';
 import 'package:margnetra_super_app/pages/auth_page/login_page/login_page.dart';
 import 'package:margnetra_super_app/pages/auth_page/registration_page/registration_page.dart';
 import 'package:margnetra_super_app/pages/bounty_capture_page/bounty_capture_page.dart';
@@ -19,6 +20,7 @@ class AppPageRoute {
   static const String bountyCapturePage = '/bountyCapture';
   static const String profilePage = '/profile';
   static const String settingsPage = '/settings';
+  static const String bluetoothScanPage = '/bluetoothScan';
 
   
   
@@ -32,5 +34,6 @@ class AppPageRoute {
         bountyCapturePage: (context) => const BountyCaptureWidget(),
         profilePage: (context) => const ProfileWidget(),
         settingsPage: (context) => const SettingsWidget(),
+        bluetoothScanPage: (context) => const BluetoothScanPage(),
          };
 }
