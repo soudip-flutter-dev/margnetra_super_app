@@ -36,6 +36,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.0.9
   flutter_blue_plus: ^2.3.13
+  geolocator: ^14.1.1
+  syncfusion_flutter_gauges: ^34.2.9
+  dio: ^5.11.1
+  flutter_bloc: ^9.1.1
+  equatable: ^3.0.0
+  shared_preferences: ^2.5.5
   
 
 dev_dependencies:
