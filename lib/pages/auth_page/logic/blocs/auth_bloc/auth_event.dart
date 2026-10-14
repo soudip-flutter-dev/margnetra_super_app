@@ -32,5 +32,12 @@ class RegisterEvent extends AuthEvent {
 }
 
 /// Event to perform user logout
-class LogoutEvent extends AuthEvent {}
+class LogoutEvent extends AuthEvent {
+  final String? refreshToken;
+
+  const LogoutEvent({this.refreshToken});
+
+  @override
+  List<Object?> get props => [refreshToken];
+}
 

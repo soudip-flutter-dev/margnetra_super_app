@@ -8,7 +8,7 @@ abstract class IAuthRepository {
   Future<LoginResponseModel> login(LoginRequestModel request);
   Future<RegistrationResponseModel> register(RegistrationRequestModel request);
   Future<UserModel> getUserProfile();
-  Future<void> logout();
+  Future<LogoutResponseModel?> logout({String? refreshToken});
   bool isAuthenticated();
   UserModel? getCachedUser();
 }
@@ -99,17 +99,24 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
   }
 
   @override
-  Future<void> logout() async {
+  Future<LogoutResponseModel?> logout({String? refreshToken}) async {
+    final token = refreshToken ?? _prefService.getRefreshToken() ?? '';
+    LogoutResponseModel? logoutResponse;
     try {
-      await _dataProvider.post(
+      final response = await _dataProvider.post(
         ApiUrls.logout,
+        data: LogoutRequestModel(refreshToken: token).toJson(),
         requiresAuth: true,
       );
+      if (response is Map<String, dynamic>) {
+        logoutResponse = LogoutResponseModel.fromJson(response);
+      }
     } catch (_) {
       // Ignore network errors on logout to allow local sign out
     } finally {
       await _prefService.clearAuthSession();
     }
+    return logoutResponse;
   }
 
   @override

@@ -29,7 +29,14 @@ class AuthAuthenticated extends AuthState {
 }
 
 /// State when user is not logged in / logged out
-class AuthUnauthenticated extends AuthState {}
+class AuthUnauthenticated extends AuthState {
+  final String? message;
+
+  const AuthUnauthenticated({this.message});
+
+  @override
+  List<Object?> get props => [message];
+}
 
 /// State when an authentication operation fails
 class AuthError extends AuthState {

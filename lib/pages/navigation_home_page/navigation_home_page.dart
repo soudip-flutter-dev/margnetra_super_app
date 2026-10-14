@@ -5,6 +5,7 @@ import 'package:margnetra_super_app/pages/all_nav_pages/digilocker_page/digilock
 import 'package:margnetra_super_app/pages/all_nav_pages/e_chalan_page/e_chalan_page.dart';
 import 'package:margnetra_super_app/pages/all_nav_pages/family_circle_page/family_circle_page.dart';
 import 'package:margnetra_super_app/pages/all_nav_pages/legal_page/legal_page.dart';
+import 'package:margnetra_super_app/pages/all_nav_pages/speedometer_page/speedometer_page.dart';
 import 'package:margnetra_super_app/pages/all_nav_pages/wallet_page/wallet_page.dart';
 import 'package:margnetra_super_app/pages/profile_page/profile_page.dart';
 
@@ -20,7 +21,8 @@ class _NavigationHomePageState extends State<NavigationHomePage> {
   
   NavigationDestinationLabelBehavior labelBehavior = NavigationDestinationLabelBehavior.alwaysShow;
   final List<Widget> pages =  <Widget>[
-    HudDashboardWidget(),
+    // HudDashboardWidget(),
+    SpeedometerScreen(),
     MgcWalletWidget(),
     EChallanWidget(),
     LegalVaultWidget(),

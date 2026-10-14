@@ -61,7 +61,8 @@ class _LoginPageState extends State<LoginPage> {
           CustomSnackBar.showSuccess(context, "Login successful!");
           Navigator.pushReplacementNamed(
             context,
-            AppPageRoute.speedometerPage,
+            // AppPageRoute.speedometerPage,
+            AppPageRoute.navigationHomePage,
           );
         } else if (state is AuthError) {
           CustomSnackBar.showError(context, state.message);
@@ -168,11 +169,19 @@ class _LoginPageState extends State<LoginPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(""),
-                            Text(
-                              "Forgot Password?",
-                              style: AppTextStyle.customGilroyFontMedium(
-                                fontSize: Responsive.sp(context, 16),
-                                color: AppColors.secondaryTeal,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppPageRoute.forgotPasswordPage,
+                                );
+                              },
+                              child: Text(
+                                "Forgot Password?",
+                                style: AppTextStyle.customGilroyFontMedium(
+                                  fontSize: Responsive.sp(context, 16),
+                                  color: AppColors.secondaryTeal,
+                                ),
                               ),
                             ),
                           ],

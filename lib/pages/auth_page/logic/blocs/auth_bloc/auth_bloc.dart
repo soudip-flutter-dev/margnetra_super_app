@@ -102,9 +102,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await _authRepository.logout();
-    } finally {
-      emit(AuthUnauthenticated());
+      final response = await _authRepository.logout(
+        refreshToken: event.refreshToken,
+      );
+      emit(AuthUnauthenticated(message: response?.message));
+    } catch (_) {
+      emit(const AuthUnauthenticated());
     }
   }
 }
