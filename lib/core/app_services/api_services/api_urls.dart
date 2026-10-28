@@ -4,7 +4,7 @@ class ApiUrls {
   /// Change this to match your backend host:
   /// - For Android Emulator: http://10.0.2.2:8000
   /// - For iOS Simulator / Web / Desktop: http://127.0.0.1:8000
-  /// - For Physical Device: http://<YOUR_PC_LOCAL_IP>:8000
+  /// - For Physical Device: `http://<YOUR_PC_LOCAL_IP>:8000`
   // static String baseUrl = 'http://10.0.2.2:8000';
   static String baseUrl = 'https://margentra-super-app-backend.onrender.com';
 
@@ -18,7 +18,12 @@ class ApiUrls {
 
   // User endpoints
   static const String userProfile = '/api/v1/user/profile';
-  static const String updateProfile = '/api/v1/user/settings';
+  static const String updateProfile = '/api/v1/user/profile';
+  static const String userAvatar = '/api/v1/user/avatar';
+  static const String userCivilScore = '/api/v1/user/civil-score';
+  static const String userVehicles = '/api/v1/user/vehicles';
+  static const String userPaymentMethods = '/api/v1/user/payment-methods';
+  static const String userSettings = '/api/v1/user/settings';
 
   // MargNetra App specific endpoints
   static const String emergencySos = '/api/v1/sos/trigger';

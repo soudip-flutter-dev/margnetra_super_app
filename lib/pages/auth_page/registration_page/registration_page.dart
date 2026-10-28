@@ -80,7 +80,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
           );
           Navigator.pushReplacementNamed(
             context,
-            AppPageRoute.speedometerPage,
+            AppPageRoute.loginPage,
           );
         } else if (state is AuthError) {
           CustomSnackBar.showError(context, state.message);
