@@ -41,3 +41,13 @@ class LogoutEvent extends AuthEvent {
   List<Object?> get props => [refreshToken];
 }
 
+/// Event to request password reset instructions via email
+class ForgotPasswordEvent extends AuthEvent {
+  final ForgotPasswordRequestModel mForgotPasswordRequest;
+
+  const ForgotPasswordEvent({required this.mForgotPasswordRequest});
+
+  @override
+  List<Object?> get props => [mForgotPasswordRequest];
+}
+

@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:margnetra_super_app/core/app_exception_handler/app_exception_handler.dart';
-import 'package:margnetra_super_app/pages/auth_page/data/models/models.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/models/user_model.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/repositories/auth_repository.dart';
 import 'package:margnetra_super_app/pages/auth_page/logic/blocs/auth_bloc/auth_event.dart';
@@ -19,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginEvent>(_onLogin);
     on<RegisterEvent>(_onRegister);
     on<LogoutEvent>(_onLogout);
+    on<ForgotPasswordEvent>(_onForgotPassword);
   }
 
   Future<void> _onCheckAuthStatus(
@@ -110,6 +110,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthUnauthenticated(message: response?.message));
     } catch (_) {
       emit(const AuthUnauthenticated());
+    }
+  }
+
+  Future<void> _onForgotPassword(
+    ForgotPasswordEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final response = await _authRepository.forgotPassword(
+        event.mForgotPasswordRequest,
+      );
+      emit(ForgotPasswordSuccess(response: response));
+    } on AppExceptionHandler catch (e) {
+      emit(AuthError(
+        title: e.exTitle,
+        message: e.exMsg,
+        statusCode: e.statusCode,
+      ));
+    } catch (e) {
+      emit(AuthError(
+        title: 'Error',
+        message: e.toString(),
+      ));
     }
   }
 }

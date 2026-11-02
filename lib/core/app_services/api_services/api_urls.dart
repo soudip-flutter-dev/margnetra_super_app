@@ -9,7 +9,7 @@ class ApiUrls {
   // static String baseUrlPy = 'https://margentra-super-app-backend.onrender.com';
   static String baseUrl = 'https://margentrabackend.onrender.com';
 
-  // Auth endpoints
+  // ── Auth endpoints ─────────────────────────────────────────────────────────
   static const String register = '/api/auth/register';
   static const String login = '/api/auth/login';
   static const String logout = '/api/auth/logout';
@@ -17,8 +17,8 @@ class ApiUrls {
   static const String resetPassword = '/api/auth/reset-password';
   static const String refreshToken = '/api/auth/refresh';
 
-  // User endpoints
-  static const String userProfile = '/api/v1/user/profile';
+  // ── Profile / User endpoints ───────────────────────────────────────────────
+  static const String userProfile = '/api/auth/me';
   static const String updateProfile = '/api/v1/user/profile';
   static const String userAvatar = '/api/v1/user/avatar';
   static const String userCivilScore = '/api/v1/user/civil-score';
@@ -26,7 +26,7 @@ class ApiUrls {
   static const String userPaymentMethods = '/api/v1/user/payment-methods';
   static const String userSettings = '/api/v1/user/settings';
 
-  // MargNetra App specific endpoints
+  // ── MargNetra App specific endpoints ──────────────────────────────────────
   static const String emergencySos = '/api/v1/sos/trigger';
   static const String bountyReports = '/api/v1/bounty/events';
 }

@@ -1,110 +1,119 @@
 import 'package:equatable/equatable.dart';
 
 class UserProfileModel extends Equatable {
-  final int id;
-  final String fullName;
-  final String phone;
-  final String? email;
-  final String? avatarUrl;
-  final double civilScore;
-  final int drivingStreakDays;
-  final double mgcBalance;
-  final bool isActive;
-  final bool isVerified;
-  final DateTime? createdAt;
+  bool? success;
+  String? message;
+  Data? data;
 
-  const UserProfileModel({
-    required this.id,
-    required this.fullName,
-    required this.phone,
-    this.email,
-    this.avatarUrl,
-    this.civilScore = 750.0,
-    this.drivingStreakDays = 0,
-    this.mgcBalance = 0.0,
-    this.isActive = true,
-    this.isVerified = false,
-    this.createdAt,
-  });
+  UserProfileModel({this.success, this.message, this.data});
 
-  factory UserProfileModel.fromJson(Map<String, dynamic> json) {
-    return UserProfileModel(
-      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      fullName: json['full_name'] ?? json['name'] ?? '',
-      phone: json['phone']?.toString() ?? '',
-      email: json['email']?.toString(),
-      avatarUrl: json['avatar_url']?.toString(),
-      civilScore: (json['civil_score'] is num)
-          ? (json['civil_score'] as num).toDouble()
-          : double.tryParse(json['civil_score']?.toString() ?? '750.0') ?? 750.0,
-      drivingStreakDays: (json['driving_streak_days'] is int)
-          ? json['driving_streak_days'] as int
-          : int.tryParse(json['driving_streak_days']?.toString() ?? '0') ?? 0,
-      mgcBalance: (json['mgc_balance'] is num)
-          ? (json['mgc_balance'] as num).toDouble()
-          : double.tryParse(json['mgc_balance']?.toString() ?? '0.0') ?? 0.0,
-      isActive: json['is_active'] as bool? ?? true,
-      isVerified: json['is_verified'] as bool? ?? false,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
-    );
+  UserProfileModel.fromJson(Map<String, dynamic> json) {
+    success = json['success'];
+    message = json['message'];
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'full_name': fullName,
-      'phone': phone,
-      'email': email,
-      'avatar_url': avatarUrl,
-      'civil_score': civilScore,
-      'driving_streak_days': drivingStreakDays,
-      'mgc_balance': mgcBalance,
-      'is_active': isActive,
-      'is_verified': isVerified,
-      'created_at': createdAt?.toIso8601String(),
-    };
+    final Map<String, dynamic> map = {};
+    map['success'] = success;
+    map['message'] = message;
+    if (data != null) map['data'] = data!.toJson();
+    return map;
   }
 
-  UserProfileModel copyWith({
-    int? id,
-    String? fullName,
-    String? phone,
-    String? email,
-    String? avatarUrl,
-    double? civilScore,
-    int? drivingStreakDays,
-    double? mgcBalance,
-    bool? isActive,
-    bool? isVerified,
-    DateTime? createdAt,
-  }) {
-    return UserProfileModel(
-      id: id ?? this.id,
-      fullName: fullName ?? this.fullName,
-      phone: phone ?? this.phone,
-      email: email ?? this.email,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
-      civilScore: civilScore ?? this.civilScore,
-      drivingStreakDays: drivingStreakDays ?? this.drivingStreakDays,
-      mgcBalance: mgcBalance ?? this.mgcBalance,
-      isActive: isActive ?? this.isActive,
-      isVerified: isVerified ?? this.isVerified,
-      createdAt: createdAt ?? this.createdAt,
-    );
+  // ── Convenience getters so widgets don't need to drill into .data ──
+
+  String get fullName => data?.fullName ?? '';
+  String get phoneNumber => data?.phoneNumber ?? '';
+  String get email => data?.email ?? '';
+  int get civilScore => data?.civilScore ?? 0;
+  int get maxCivilScore => data?.maxCivilScore ?? 1000;
+  String get civilRating => data?.civilRating ?? 'N/A';
+  double get scorePercent => data?.scorePercent ?? 0.0;
+  int get vehiclesCount => data?.vehiclesCount ?? 0;
+  String get vehiclesCountText => data?.vehiclesCountText ?? '0 Registered';
+  String get paymentMethodsText => data?.paymentMethodsText ?? 'Add Method';
+  String get userId => data?.userId ?? '';
+
+  @override
+  List<Object?> get props => [success, message, data];
+}
+
+class Data extends Equatable {
+  String? userId;
+  String? fullName;
+  String? phoneNumber;
+  String? email;
+  int? civilScore;
+  int? maxCivilScore;
+  String? civilRating;
+  double? scorePercent;
+  int? vehiclesCount;
+  String? vehiclesCountText;
+  String? paymentMethodsText;
+
+  Data({
+    this.userId,
+    this.fullName,
+    this.phoneNumber,
+    this.email,
+    this.civilScore,
+    this.maxCivilScore,
+    this.civilRating,
+    this.scorePercent,
+    this.vehiclesCount,
+    this.vehiclesCountText,
+    this.paymentMethodsText,
+  });
+
+  Data.fromJson(Map<String, dynamic> json) {
+    userId = json['userId']?.toString();
+    fullName = json['fullName']?.toString();
+    phoneNumber = json['phoneNumber']?.toString();
+    email = json['email']?.toString();
+    civilScore = json['civilScore'] is int
+        ? json['civilScore'] as int
+        : int.tryParse(json['civilScore']?.toString() ?? '0');
+    maxCivilScore = json['maxCivilScore'] is int
+        ? json['maxCivilScore'] as int
+        : int.tryParse(json['maxCivilScore']?.toString() ?? '1000');
+    civilRating = json['civilRating']?.toString();
+    scorePercent = json['scorePercent'] is num
+        ? (json['scorePercent'] as num).toDouble()
+        : double.tryParse(json['scorePercent']?.toString() ?? '0');
+    vehiclesCount = json['vehiclesCount'] is int
+        ? json['vehiclesCount'] as int
+        : int.tryParse(json['vehiclesCount']?.toString() ?? '0');
+    vehiclesCountText = json['vehiclesCountText']?.toString();
+    paymentMethodsText = json['paymentMethodsText']?.toString();
   }
+
+  Map<String, dynamic> toJson() => {
+        'userId': userId,
+        'fullName': fullName,
+        'phoneNumber': phoneNumber,
+        'email': email,
+        'civilScore': civilScore,
+        'maxCivilScore': maxCivilScore,
+        'civilRating': civilRating,
+        'scorePercent': scorePercent,
+        'vehiclesCount': vehiclesCount,
+        'vehiclesCountText': vehiclesCountText,
+        'paymentMethodsText': paymentMethodsText,
+      };
 
   @override
   List<Object?> get props => [
-        id,
+        userId,
         fullName,
-        phone,
+        phoneNumber,
         email,
-        avatarUrl,
         civilScore,
-        drivingStreakDays,
-        mgcBalance,
-        isActive,
-        isVerified,
-        createdAt,
+        maxCivilScore,
+        civilRating,
+        scorePercent,
+        vehiclesCount,
+        vehiclesCountText,
+        paymentMethodsText,
       ];
 }

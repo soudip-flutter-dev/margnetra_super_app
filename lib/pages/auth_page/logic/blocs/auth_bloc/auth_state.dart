@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/models/auth_registration_response_model.dart';
+import 'package:margnetra_super_app/pages/auth_page/data/models/models.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/models/user_model.dart';
 
 abstract class AuthState extends Equatable {
@@ -39,6 +40,16 @@ class AuthUnauthenticated extends AuthState {
 
   @override
   List<Object?> get props => [message];
+}
+
+/// State when forgot password request succeeds
+class ForgotPasswordSuccess extends AuthState {
+  final ForgotPasswordResponseModel response;
+
+  const ForgotPasswordSuccess({required this.response});
+
+  @override
+  List<Object?> get props => [response];
 }
 
 /// State when an authentication operation fails

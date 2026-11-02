@@ -51,24 +51,30 @@ class ProfileWidget extends StatelessWidget {
             'Are you sure you want to log out of your MargNetra account?',
             style: TextStyle(color: mutedText, fontSize: 14),
           ),
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actionsPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel', style: TextStyle(color: mutedText, fontWeight: FontWeight.w500)),
+              child: const Text('Cancel',
+                  style: TextStyle(
+                      color: mutedText, fontWeight: FontWeight.w500)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: destructiveRed,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               ),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
                 context.read<AuthBloc>().add(const LogoutEvent());
               },
-              child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
+              child: const Text('Logout',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ],
         );
@@ -82,7 +88,8 @@ class ProfileWidget extends StatelessWidget {
       listener: (context, authState) {
         if (authState is AuthUnauthenticated) {
           CustomSnackBar.showSuccess(context, 'Logged out successfully');
-          Navigator.pushNamedAndRemoveUntil(context, AppPageRoute.loginPage, (route) => false);
+          Navigator.pushNamedAndRemoveUntil(
+              context, AppPageRoute.loginPage, (route) => false);
         } else if (authState is AuthError) {
           CustomSnackBar.showError(context, authState.message);
         }
@@ -94,16 +101,21 @@ class ProfileWidget extends StatelessWidget {
             color: cyan,
             backgroundColor: cardColor,
             onRefresh: () async {
-              context.read<ProfileBloc>().add(const LoadProfileEvent(forceRefresh: true));
-              context.read<VehicleBloc>().add(const LoadVehiclesEvent(forceRefresh: true));
+              context
+                  .read<ProfileBloc>()
+                  .add(const LoadProfileEvent(forceRefresh: true));
+              context
+                  .read<VehicleBloc>()
+                  .add(const LoadVehiclesEvent(forceRefresh: true));
             },
             child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics()),
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title Bar
+                  // ── Title ─────────────────────────────────────
                   const Text(
                     'Profile',
                     style: TextStyle(
@@ -115,7 +127,7 @@ class ProfileWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
 
-                  // User Info Card
+                  // ── User Info Card ─────────────────────────────
                   BlocConsumer<ProfileBloc, ProfileState>(
                     listener: (context, state) {
                       if (state is ProfileError) {
@@ -125,38 +137,41 @@ class ProfileWidget extends StatelessWidget {
                       }
                     },
                     builder: (context, state) {
-                      final UserProfileModel? profile = (state is ProfileLoaded)
-                          ? state.profile
-                          : (state is ProfileLoading)
-                              ? state.cachedProfile
-                              : null;
+                      final UserProfileModel? profile =
+                          (state is ProfileLoaded)
+                              ? state.profile
+                              : (state is ProfileLoading)
+                                  ? state.cachedProfile
+                                  : null;
 
-                      return _buildUserInfoCard(context, profile, (state is ProfileLoaded) && state.isUpdating);
+                      final bool isUpdating =
+                          (state is ProfileLoaded) && state.isUpdating;
+
+                      return _buildUserInfoCard(context, profile, isUpdating);
                     },
                   ),
                   const SizedBox(height: 14),
 
-                  // Civil Score Card
+                  // ── Civil Score Card ───────────────────────────
                   BlocBuilder<ProfileBloc, ProfileState>(
                     builder: (context, state) {
-                      final profile = (state is ProfileLoaded) ? state.profile : null;
-                      final civilScore = (state is ProfileLoaded) ? state.civilScore : null;
-
-                      return _buildCivilScoreCard(profile, civilScore);
+                      final profile =
+                          (state is ProfileLoaded) ? state.profile : null;
+                      return _buildCivilScoreCard(profile);
                     },
                   ),
                   const SizedBox(height: 20),
 
-                  // My Vehicles Menu Item
+                  // ── My Vehicles ────────────────────────────────
                   BlocBuilder<VehicleBloc, VehicleState>(
                     builder: (context, state) {
                       int count = 0;
                       if (state is VehicleLoaded) {
                         count = state.vehicles.length;
-                      } else if (state is VehicleLoading && state.cachedVehicles != null) {
+                      } else if (state is VehicleLoading &&
+                          state.cachedVehicles != null) {
                         count = state.cachedVehicles!.length;
                       }
-
                       return _buildMenuItem(
                         icon: Icons.directions_car_outlined,
                         title: 'My Vehicles',
@@ -167,21 +182,24 @@ class ProfileWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
 
-                  // Payment Methods Menu Item
+                  // ── Payment Methods ────────────────────────────
                   BlocBuilder<ProfileBloc, ProfileState>(
                     builder: (context, state) {
-                      final count = (state is ProfileLoaded) ? state.paymentMethods.length : 0;
+                      final count = (state is ProfileLoaded)
+                          ? state.paymentMethods.length
+                          : 0;
                       return _buildMenuItem(
                         icon: Icons.payment_outlined,
                         title: 'Payment Methods',
-                        trailingText: count > 0 ? '$count Saved' : 'Add Method',
+                        trailingText:
+                            count > 0 ? '$count Saved' : 'Add Method',
                         onTap: () => PaymentMethodSheet.show(context),
                       );
                     },
                   ),
                   const SizedBox(height: 10),
 
-                  // App Settings Menu Item
+                  // ── App Settings ───────────────────────────────
                   _buildMenuItem(
                     icon: Icons.settings_outlined,
                     title: 'App Settings',
@@ -191,17 +209,19 @@ class ProfileWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
 
-                  // Help & Support
+                  // ── Help & Support ─────────────────────────────
                   _buildMenuItem(
                     icon: Icons.help_outline,
                     title: 'Help & Support',
                     onTap: () {
-                      CustomSnackBar.showSuccess(context, 'MargNetra Helpdesk: support@margnetra.in');
+                      CustomSnackBar.showSuccess(
+                          context,
+                          'MargNetra Helpdesk: support@margnetra.in');
                     },
                   ),
                   const SizedBox(height: 18),
 
-                  // Logout Item
+                  // ── Logout ─────────────────────────────────────
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, authState) {
                       return _buildLogoutItem(
@@ -219,17 +239,24 @@ class ProfileWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildUserInfoCard(BuildContext context, UserProfileModel? profile, bool isUpdating) {
-    final displayName = (profile != null && profile.fullName.trim().isNotEmpty)
-        ? profile.fullName
-        : 'MargNetra Driver';
-    final displayPhone = (profile != null && profile.phone.trim().isNotEmpty)
-        ? profile.phone
-        : 'Not Registered';
-    final displayEmail = (profile != null && profile.email != null && profile.email!.trim().isNotEmpty)
-        ? profile.email!
-        : 'Add email address';
-    final avatarUrl = profile?.avatarUrl;
+  // ── Widgets ─────────────────────────────────────────────────────────────────
+
+  Widget _buildUserInfoCard(
+      BuildContext context, UserProfileModel? profile, bool isUpdating) {
+    final displayName =
+        (profile != null && profile.fullName.trim().isNotEmpty)
+            ? profile.fullName
+            : 'MargNetra Driver';
+
+    final displayPhone =
+        (profile != null && profile.phoneNumber.trim().isNotEmpty)
+            ? profile.phoneNumber
+            : 'Not Registered';
+
+    final displayEmail =
+        (profile != null && profile.email.trim().isNotEmpty)
+            ? profile.email
+            : 'Add email address';
 
     return Container(
       width: double.infinity,
@@ -241,32 +268,24 @@ class ProfileWidget extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Avatar with Camera Tap Target
+          // Avatar
           GestureDetector(
             onTap: () => AvatarPickerSheet.show(context),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 32,
-                  backgroundColor: const Color(0xFF162520),
-                  backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
-                      ? NetworkImage(avatarUrl)
-                      : null,
-                  child: (avatarUrl == null || avatarUrl.isEmpty)
-                      ? const Icon(Icons.person, size: 34, color: primaryGreen)
-                      : null,
+                  backgroundColor: Color(0xFF162520),
+                  child: Icon(Icons.person, size: 34, color: primaryGreen),
                 ),
-                Positioned(
+                const Positioned(
                   bottom: -2,
                   right: -2,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: cyan,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.camera_alt, size: 12, color: Colors.black),
+                  child: CircleAvatar(
+                    radius: 10,
+                    backgroundColor: cyan,
+                    child: Icon(Icons.camera_alt, size: 12, color: Colors.black),
                   ),
                 ),
                 if (isUpdating)
@@ -281,30 +300,20 @@ class ProfileWidget extends StatelessWidget {
           ),
           const SizedBox(width: 14),
 
-          // User Details
+          // User details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: whiteText,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    if (profile?.isVerified ?? false) ...[
-                      const SizedBox(width: 4),
-                      const Icon(Icons.verified, color: cyan, size: 16),
-                    ],
-                  ],
+                Text(
+                  displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: whiteText,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -316,13 +325,14 @@ class ProfileWidget extends StatelessWidget {
                   displayEmail,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: mutedText, fontSize: 12.5),
+                  style:
+                      const TextStyle(color: mutedText, fontSize: 12.5),
                 ),
               ],
             ),
           ),
 
-          // Edit Profile Button
+          // Edit button
           IconButton(
             icon: const Icon(Icons.edit_outlined, color: cyan, size: 20),
             onPressed: () {
@@ -336,11 +346,14 @@ class ProfileWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCivilScoreCard(UserProfileModel? profile, CivilScoreModel? civilScore) {
-    final double score = civilScore?.currentScore ?? profile?.civilScore ?? 750.0;
-    final int streak = civilScore?.streakDays ?? profile?.drivingStreakDays ?? 0;
-    final double balance = profile?.mgcBalance ?? 0.0;
-    final double factor = (score / 1000.0).clamp(0.0, 1.0);
+  Widget _buildCivilScoreCard(UserProfileModel? profile) {
+    final int score = profile?.civilScore ?? 0;
+    final int maxScore = profile?.maxCivilScore ?? 1000;
+    final String rating = profile?.civilRating ?? 'N/A';
+    final double percent = profile?.scorePercent ?? 0.0;
+    final double factor = (percent / 100.0).clamp(0.0, 1.0);
+    final int vehicles = profile?.vehiclesCount ?? 0;
+    final String paymentsText = profile?.paymentMethodsText ?? 'Add Method';
 
     return Container(
       width: double.infinity,
@@ -353,6 +366,7 @@ class ProfileWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header row
           Row(
             children: [
               const Text(
@@ -364,49 +378,58 @@ class ProfileWidget extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              // Driving Streak Badge
+              // Rating badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFF163220),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: primaryGreen.withAlpha(80)),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.local_fire_department, color: primaryGreen, size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$streak day streak',
-                      style: const TextStyle(color: primaryGreen, fontSize: 11, fontWeight: FontWeight.w700),
-                    ),
-                  ],
+                child: Text(
+                  rating,
+                  style: const TextStyle(
+                      color: primaryGreen,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700),
                 ),
               ),
               const SizedBox(width: 8),
-              // MGC Balance Badge
+              // Vehicles badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFF162530),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: cyan.withAlpha(80)),
                 ),
-                child: Text(
-                  '${balance.toStringAsFixed(1)} MGC',
-                  style: const TextStyle(color: cyan, fontSize: 11, fontWeight: FontWeight.w700),
+                child: Row(
+                  children: [
+                    const Icon(Icons.directions_car,
+                        color: cyan, size: 12),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$vehicles Vehicles',
+                      style: const TextStyle(
+                          color: cyan,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
 
-          // Score Value
+          // Score value
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                score.toStringAsFixed(0),
+                '$score',
                 style: const TextStyle(
                   color: primaryGreen,
                   fontSize: 34,
@@ -415,11 +438,14 @@ class ProfileWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 5),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 3),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 3),
                 child: Text(
-                  '/1000',
-                  style: TextStyle(color: mutedText, fontSize: 14, fontWeight: FontWeight.w500),
+                  '/$maxScore',
+                  style: const TextStyle(
+                      color: mutedText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -427,17 +453,25 @@ class ProfileWidget extends StatelessWidget {
           const SizedBox(height: 8),
 
           Text(
-            score >= 800 ? 'Exceptional Driver! Top reward tier unlocked.' : 'Good Driver! Maintain speed limits to earn MGC coins.',
-            style: const TextStyle(color: primaryGreen, fontSize: 12.5, fontWeight: FontWeight.w600),
+            score >= 800
+                ? 'Exceptional Driver! Top reward tier unlocked.'
+                : 'Good Driver! Maintain speed limits to earn more.',
+            style: const TextStyle(
+                color: primaryGreen,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
 
-          // Progress Bar
+          // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Stack(
               children: [
-                Container(height: 6, width: double.infinity, color: const Color(0xFF252A2A)),
+                Container(
+                    height: 6,
+                    width: double.infinity,
+                    color: const Color(0xFF252A2A)),
                 FractionallySizedBox(
                   widthFactor: factor,
                   child: Container(
@@ -450,6 +484,19 @@ class ProfileWidget extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 12),
+
+          // Payment methods row
+          Row(
+            children: [
+              const Icon(Icons.payment_outlined, size: 14, color: mutedText),
+              const SizedBox(width: 6),
+              Text(
+                'Payments: $paymentsText',
+                style: const TextStyle(color: mutedText, fontSize: 12),
+              ),
+            ],
           ),
         ],
       ),
@@ -491,18 +538,23 @@ class ProfileWidget extends StatelessWidget {
             if (trailingText != null) ...[
               Text(
                 trailingText,
-                style: const TextStyle(color: mutedText, fontSize: 12, fontWeight: FontWeight.w400),
+                style: const TextStyle(
+                    color: mutedText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400),
               ),
               const SizedBox(width: 7),
             ],
-            const Icon(Icons.chevron_right, size: 22, color: Color(0xFF777780)),
+            const Icon(Icons.chevron_right,
+                size: 22, color: Color(0xFF777780)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLogoutItem({required BuildContext context, required bool isLoading}) {
+  Widget _buildLogoutItem(
+      {required BuildContext context, required bool isLoading}) {
     return InkWell(
       onTap: isLoading ? null : () => _showLogoutDialog(context),
       borderRadius: BorderRadius.circular(14),
@@ -521,14 +573,18 @@ class ProfileWidget extends StatelessWidget {
               const SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.2, color: destructiveRed),
+                child: CircularProgressIndicator(
+                    strokeWidth: 2.2, color: destructiveRed),
               )
             else
               const Icon(Icons.logout, size: 22, color: destructiveRed),
             const SizedBox(width: 14),
             Text(
               isLoading ? 'Logging out...' : 'Logout',
-              style: const TextStyle(color: destructiveRed, fontSize: 14, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  color: destructiveRed,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600),
             ),
           ],
         ),

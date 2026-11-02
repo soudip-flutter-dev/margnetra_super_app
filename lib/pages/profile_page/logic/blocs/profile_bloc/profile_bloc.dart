@@ -134,4 +134,5 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(ProfileError(message: message));
     }
   }
+
 }

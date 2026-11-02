@@ -9,8 +9,10 @@ import 'package:margnetra_super_app/pages/auth_page/data/repositories/base_repos
 abstract class IAuthRepository {
   Future<LoginResponseModel> login(LoginRequestModel request);
   Future<RegistrationResponseModel> register(RegisterRequestModel request);
+  Future<ForgotPasswordResponseModel> forgotPassword(ForgotPasswordRequestModel request);
   Future<UserModel> getUserProfile();
   Future<LogoutResponseModel?> logout({String? refreshToken});
+  Future<RefreshTokanResponse> refreshTokan({String? refreshTokan});
   bool isAuthenticated();
   UserModel? getCachedUser();
 }
@@ -27,10 +29,10 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
 
   @override
   Future<LoginResponseModel> login(LoginRequestModel request) async {
+    // The interceptor skips auth header for login automatically.
     final response = await _dataProvider.post(
       ApiUrls.login,
       data: request.toJson(),
-      requiresAuth: false,
     );
 
     final loginResponse = LoginResponseModel.fromJson(
@@ -38,12 +40,11 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
     );
 
     // Persist session into local storage
-    if (loginResponse.data!.accessToken!.isNotEmpty) {
+    if (loginResponse.data?.accessToken?.isNotEmpty == true) {
       await _prefService.saveAuthToken(loginResponse.data!.accessToken!);
       await _prefService.setLoggedIn(true);
 
-      if (loginResponse.data!.refreshToken != null &&
-          loginResponse.data!.refreshToken!.isNotEmpty) {
+      if (loginResponse.data!.refreshToken?.isNotEmpty == true) {
         await _prefService.saveRefreshToken(loginResponse.data!.refreshToken!);
       }
     }
@@ -53,10 +54,10 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
 
   @override
   Future<RegistrationResponseModel> register(RegisterRequestModel request) async {
+    // The interceptor skips auth header for register automatically.
     final response = await _dataProvider.post(
       ApiUrls.register,
       data: request.toJson(),
-      requiresAuth: false,
     );
 
     final registrationResponse = RegistrationResponseModel.fromJson(
@@ -74,21 +75,31 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
     //   }
     // }
 
-    if (registrationResponse.data!.id != null) {
-      final user = registrationResponse;
-      await _prefService.saveUserData(user.toJson());
-      await _prefService.saveUserId(user.data!.id.toString());
+    if (registrationResponse.data?.id != null) {
+      await _prefService.saveUserData(registrationResponse.toJson());
+      await _prefService.saveUserId(registrationResponse.data!.id.toString());
     }
 
     return registrationResponse;
   }
 
   @override
-  Future<UserModel> getUserProfile() async {
-    final response = await _dataProvider.get(
-      ApiUrls.userProfile,
-      requiresAuth: true,
+  Future<ForgotPasswordResponseModel> forgotPassword(
+      ForgotPasswordRequestModel request) async {
+    final response = await _dataProvider.post(
+      ApiUrls.forgotPassword,
+      data: request.toJson(),
     );
+
+    return ForgotPasswordResponseModel.fromJson(
+      response is Map<String, dynamic> ? response : <String, dynamic>{},
+    );
+  }
+
+  @override
+  Future<UserModel> getUserProfile() async {
+    // Bearer token is attached automatically by the interceptor.
+    final response = await _dataProvider.get(ApiUrls.userProfile);
 
     final user = UserModel.fromJson(
       response is Map<String, dynamic> ? response : <String, dynamic>{},
@@ -107,7 +118,6 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
       final response = await _dataProvider.post(
         ApiUrls.logout,
         data: LogoutRequestModel(refreshToken: token).toJson(),
-        requiresAuth: true,
       );
       if (response is Map<String, dynamic>) {
         logoutResponse = LogoutResponseModel.fromJson(response);
@@ -118,6 +128,16 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
       await _prefService.clearAuthSession();
     }
     return logoutResponse;
+  }
+
+  /// Calls `POST /api/auth/refresh`.
+  ///
+  /// - New tokens are automatically persisted inside [DataProvider.refreshTokan].
+  /// - Pass [refreshTokan] to supply a specific token; omit it to use the
+  ///   value already stored in [SharedPrefService].
+  @override
+  Future<RefreshTokanResponse> refreshTokan({String? refreshTokan}) async {
+    return _dataProvider.refreshTokan(refreshTokan: refreshTokan);
   }
 
   @override
