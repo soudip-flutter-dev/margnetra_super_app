@@ -6,6 +6,8 @@ class SharedPrefKeys {
   static const String isLoggedIn = 'is_logged_in';
   static const String userId = 'user_id';
   static const String userProfile = 'user_profile';
+  static const String appSettings = 'app_settings';
+  static const String cachedVehicles = 'cached_vehicles';
   static const String themeMode = 'theme_mode';
   static const String isFirstTimeUser = 'is_first_time_user';
 }

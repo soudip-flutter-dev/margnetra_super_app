@@ -105,12 +105,32 @@ class SharedPrefService {
 
   Map<String, dynamic>? getUserData() => getJson(SharedPrefKeys.userProfile);
 
+  Future<bool> saveAppSettings(Map<String, dynamic> data) async =>
+      await setJson(SharedPrefKeys.appSettings, data);
+
+  Map<String, dynamic>? getAppSettings() => getJson(SharedPrefKeys.appSettings);
+
+  Future<bool> saveCachedVehicles(List<Map<String, dynamic>> vehicles) async =>
+      await setString(SharedPrefKeys.cachedVehicles, jsonEncode(vehicles));
+
+  List<Map<String, dynamic>>? getCachedVehicles() {
+    final raw = getString(SharedPrefKeys.cachedVehicles);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Clears user authentication session data while preserving app preferences
   Future<void> clearAuthSession() async {
     await remove(SharedPrefKeys.accessToken);
     await remove(SharedPrefKeys.refreshToken);
     await remove(SharedPrefKeys.userId);
     await remove(SharedPrefKeys.userProfile);
+    await remove(SharedPrefKeys.cachedVehicles);
     await setBool(SharedPrefKeys.isLoggedIn, false);
   }
 }
