@@ -23,7 +23,7 @@ class LoginEvent extends AuthEvent {
 
 /// Event to perform user registration
 class RegisterEvent extends AuthEvent {
-  final RegistrationRequestModel mRegisterRequest;
+  final RegisterRequestModel mRegisterRequest;
 
   const RegisterEvent({required this.mRegisterRequest});
 

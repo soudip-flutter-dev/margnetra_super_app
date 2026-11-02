@@ -1,33 +1,76 @@
 class LoginResponseModel {
+  bool? success;
+  String? message;
+  Data? data;
+
+  LoginResponseModel({this.success, this.message, this.data});
+
+ factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
+    return LoginResponseModel(
+     success: json['success'],
+     message: json['message'],
+     data: json['data'] != null ? Data.fromJson(json['data']) : null,
+   );
+   }
+
+  Map<String, dynamic> toJson() =>{
+"success": success,
+"message": message,
+"data": data?.toJson(),
+  };
+}
+
+class Data {
   String? accessToken;
   String? refreshToken;
   String? tokenType;
   int? expiresIn;
+  User? user;
 
-  LoginResponseModel({
-    this.accessToken,
-    this.refreshToken,
-    this.tokenType,
-    this.expiresIn,
-  });
+  Data(
+      {this.accessToken,
+      this.refreshToken,
+      this.tokenType,
+      this.expiresIn,
+      this.user});
 
-  String get token => accessToken ?? '';
+ factory Data.fromJson(Map<String, dynamic> json) {
+    return Data(
+     accessToken: json['accessToken'],
+     refreshToken: json['refreshToken'],
+     tokenType: json['tokenType'],
+     expiresIn: json['expiresIn'],
+     user: json['user'] != null ? User.fromJson(json['user']) : null,
+   );
+   }
 
-  factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
-    return LoginResponseModel(
-      accessToken: json['access_token'] ?? json['accessToken'] ?? json['token'],
-      refreshToken: json['refresh_token'] ?? json['refreshToken'],
-      tokenType: json['token_type'] ?? json['tokenType'],
-      expiresIn: json['expires_in'] ?? json['expiresIn'],
-    );
+  Map<String, dynamic> toJson() => {
+"accessToken": accessToken,
+"refreshToken": refreshToken,
+"tokenType": tokenType,
+"expiresIn": expiresIn,
+"user": user?.toJson(),
+  };
+}
+
+class User {
+  String? id;
+  String? fullName;
+  String? email;
+
+  User({this.id, this.fullName, this.email});
+
+ factory User.fromJson(Map<String, dynamic> json) {
+   return User(
+     id: json['id'],
+     fullName: json['fullName'],
+     email: json['email'],
+   );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'access_token': accessToken,
-      'refresh_token': refreshToken,
-      'token_type': tokenType,
-      'expires_in': expiresIn,
-    };
-  }
+  Map<String, dynamic> toJson() =>{
+"id": id,
+"fullName": fullName,
+"email": email,
+  };
 }

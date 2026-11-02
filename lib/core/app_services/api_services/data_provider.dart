@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:margnetra_super_app/core/app_exception_handler/app_exception_handler.dart';
 import 'package:margnetra_super_app/core/app_services/api_services/api_client.dart';
+import 'package:margnetra_super_app/core/app_services/api_services/api_urls.dart';
 
 class DataProvider {
   final Dio _dio;
@@ -25,7 +26,7 @@ class DataProvider {
   }) async {
     try {
       final response = await _dio.get(
-        endpoint,
+        "${ApiUrls.baseUrl}$endpoint",
         queryParameters: queryParameters,
         options: _buildOptions(options, requiresAuth),
         cancelToken: cancelToken,
@@ -51,7 +52,7 @@ class DataProvider {
   }) async {
     try {
       final response = await _dio.post(
-        endpoint,
+        "${ApiUrls.baseUrl}$endpoint",
         data: data,
         queryParameters: queryParameters,
         options: _buildOptions(options, requiresAuth),
@@ -78,7 +79,7 @@ class DataProvider {
   }) async {
     try {
       final response = await _dio.put(
-        endpoint,
+        "${ApiUrls.baseUrl}$endpoint",
         data: data,
         queryParameters: queryParameters,
         options: _buildOptions(options, requiresAuth),
@@ -105,7 +106,7 @@ class DataProvider {
   }) async {
     try {
       final response = await _dio.patch(
-        endpoint,
+        "${ApiUrls.baseUrl}$endpoint",
         data: data,
         queryParameters: queryParameters,
         options: _buildOptions(options, requiresAuth),
@@ -132,7 +133,7 @@ class DataProvider {
   }) async {
     try {
       final response = await _dio.delete(
-        endpoint,
+        "${ApiUrls.baseUrl}$endpoint",
         data: data,
         queryParameters: queryParameters,
         options: _buildOptions(options, requiresAuth),
@@ -170,7 +171,7 @@ class DataProvider {
       final formData = FormData.fromMap(formMap);
 
       final response = await _dio.post(
-        endpoint,
+        "${ApiUrls.baseUrl}$endpoint",
         data: formData,
         cancelToken: cancelToken,
         options: _buildOptions(Options(), requiresAuth),

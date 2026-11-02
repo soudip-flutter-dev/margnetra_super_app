@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:margnetra_super_app/pages/auth_page/data/models/auth_registration_response_model.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/models/user_model.dart';
 
 abstract class AuthState extends Equatable {
@@ -16,11 +17,13 @@ class AuthLoading extends AuthState {}
 
 /// State when user is successfully authenticated
 class AuthAuthenticated extends AuthState {
-  final String token;
+  final String ?token;
+  final RegistrationResponseModel? registrationResponse;
   final UserModel? user;
 
   const AuthAuthenticated({
-    required this.token,
+     this.token,
+    this.registrationResponse,
     this.user,
   });
 

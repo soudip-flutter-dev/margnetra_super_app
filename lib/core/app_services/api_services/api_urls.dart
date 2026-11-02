@@ -6,15 +6,16 @@ class ApiUrls {
   /// - For iOS Simulator / Web / Desktop: http://127.0.0.1:8000
   /// - For Physical Device: http://<YOUR_PC_LOCAL_IP>:8000
   // static String baseUrl = 'http://10.0.2.2:8000';
-  static String baseUrl = 'https://margentra-super-app-backend.onrender.com';
+  // static String baseUrlPy = 'https://margentra-super-app-backend.onrender.com';
+  static String baseUrl = 'https://margentrabackend.onrender.com';
 
   // Auth endpoints
-  static const String register = '/api/v1/auth/register';
-  static const String login = '/api/v1/auth/login';
-  static const String forgotPassword = '/api/v1/auth/forgot-password';
-  static const String resetPassword = '/api/v1/auth/reset-password';
-  static const String refreshToken = '/api/v1/auth/refresh';
-  static const String logout = '/api/v1/auth/logout';
+  static const String register = '/api/auth/register';
+  static const String login = '/api/auth/login';
+  static const String logout = '/api/auth/logout';
+  static const String forgotPassword = '/api/auth/forgot-password';
+  static const String resetPassword = '/api/auth/reset-password';
+  static const String refreshToken = '/api/auth/refresh';
 
   // User endpoints
   static const String userProfile = '/api/v1/user/profile';

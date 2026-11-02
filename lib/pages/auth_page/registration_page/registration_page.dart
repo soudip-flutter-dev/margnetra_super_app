@@ -57,10 +57,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
             RegisterEvent(
-              mRegisterRequest: RegistrationRequestModel(
+              mRegisterRequest: RegisterRequestModel(
                 fullName: _nameController.text.trim(),
                 email: _emailController.text.trim(),
-                phone: _mobileNoController.text.trim(),
+                phoneNumber: _mobileNoController.text.trim(),
                 password: _passwordController.text,
                 confirmPassword: _confirmPasswordController.text,
               ),
@@ -80,7 +80,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
           );
           Navigator.pushReplacementNamed(
             context,
-            AppPageRoute.speedometerPage,
+            AppPageRoute.loginPage,
           );
         } else if (state is AuthError) {
           CustomSnackBar.showError(context, state.message);

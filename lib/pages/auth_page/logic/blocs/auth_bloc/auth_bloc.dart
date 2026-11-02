@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:margnetra_super_app/core/app_exception_handler/app_exception_handler.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/models/models.dart';
+import 'package:margnetra_super_app/pages/auth_page/data/models/user_model.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/repositories/auth_repository.dart';
 import 'package:margnetra_super_app/pages/auth_page/logic/blocs/auth_bloc/auth_event.dart';
 import 'package:margnetra_super_app/pages/auth_page/logic/blocs/auth_bloc/auth_state.dart';
@@ -54,7 +55,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         user = _authRepository.getCachedUser();
       }
       emit(AuthAuthenticated(
-        token: response.token,
+        token: response.data!.accessToken,
         user: user,
       ));
     } on AppExceptionHandler catch (e) {
@@ -78,10 +79,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final response = await _authRepository.register(event.mRegisterRequest);
-      emit(AuthAuthenticated(
-        token: response.token,
-        user: response.toUserModel(),
-      ));
+      if (response.success == true) {
+        emit(AuthAuthenticated(
+          registrationResponse: response,
+        ));
+      }
     } on AppExceptionHandler catch (e) {
       emit(AuthError(
         title: e.exTitle,

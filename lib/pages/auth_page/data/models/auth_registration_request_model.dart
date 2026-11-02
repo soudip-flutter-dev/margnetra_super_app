@@ -1,35 +1,32 @@
-class RegistrationRequestModel {
+class RegisterRequestModel {
   String? fullName;
-  String? phone;
   String? email;
+  String? phoneNumber;
   String? password;
   String? confirmPassword;
 
-  RegistrationRequestModel({
-    String? fullName,
-    String? name,
-    this.phone,
-    this.email,
-    this.password,
-    this.confirmPassword,
-  }) : fullName = fullName ?? name;
+  RegisterRequestModel(
+      {this.fullName,
+      this.email,
+      this.phoneNumber,
+      this.password,
+      this.confirmPassword});
 
-  factory RegistrationRequestModel.fromJson(Map<String, dynamic> json) {
-    return RegistrationRequestModel(
-      fullName: json['full_name'] ?? json['fullName'],
-      phone: json['phone'],
+  factory RegisterRequestModel.fromJson(Map<String, dynamic> json) {
+    return RegisterRequestModel(
+      fullName: json['fullName'],
       email: json['email'],
+      phoneNumber: json['phoneNumber'],
       password: json['password'],
-      confirmPassword: json['confirm_password'] ?? json['confirmPassword'],
+      confirmPassword: json['confirmPassword'],
     );
   }
 
   Map<String, dynamic> toJson() => {
     "fullName": fullName,
     "email": email,
+    "phoneNumber": phoneNumber,
     "password": password,
-    "phone": phone,
-    "full_name": fullName,
-    "confirm_password": confirmPassword,
+    "confirmPassword": confirmPassword,
   };
 }

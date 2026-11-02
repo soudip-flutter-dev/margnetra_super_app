@@ -1,12 +1,14 @@
 import 'package:margnetra_super_app/core/app_services/api_services/api_urls.dart';
 import 'package:margnetra_super_app/core/app_services/api_services/data_provider.dart';
 import 'package:margnetra_super_app/core/app_services/local_storage/shared_pref_service.dart';
+import 'package:margnetra_super_app/pages/auth_page/data/models/auth_registration_response_model.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/models/models.dart';
+import 'package:margnetra_super_app/pages/auth_page/data/models/user_model.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/repositories/base_repository.dart';
 
 abstract class IAuthRepository {
   Future<LoginResponseModel> login(LoginRequestModel request);
-  Future<RegistrationResponseModel> register(RegistrationRequestModel request);
+  Future<RegistrationResponseModel> register(RegisterRequestModel request);
   Future<UserModel> getUserProfile();
   Future<LogoutResponseModel?> logout({String? refreshToken});
   bool isAuthenticated();
@@ -36,13 +38,13 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
     );
 
     // Persist session into local storage
-    if (loginResponse.token.isNotEmpty) {
-      await _prefService.saveAuthToken(loginResponse.token);
+    if (loginResponse.data!.accessToken!.isNotEmpty) {
+      await _prefService.saveAuthToken(loginResponse.data!.accessToken!);
       await _prefService.setLoggedIn(true);
 
-      if (loginResponse.refreshToken != null &&
-          loginResponse.refreshToken!.isNotEmpty) {
-        await _prefService.saveRefreshToken(loginResponse.refreshToken!);
+      if (loginResponse.data!.refreshToken != null &&
+          loginResponse.data!.refreshToken!.isNotEmpty) {
+        await _prefService.saveRefreshToken(loginResponse.data!.refreshToken!);
       }
     }
 
@@ -50,8 +52,7 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
   }
 
   @override
-  Future<RegistrationResponseModel> register(
-      RegistrationRequestModel request) async {
+  Future<RegistrationResponseModel> register(RegisterRequestModel request) async {
     final response = await _dataProvider.post(
       ApiUrls.register,
       data: request.toJson(),
@@ -63,20 +64,20 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
     );
 
     // Persist session if registration automatically returns tokens
-    if (registrationResponse.token.isNotEmpty) {
-      await _prefService.saveAuthToken(registrationResponse.token);
-      await _prefService.setLoggedIn(true);
+    // if (registrationResponse.token.isNotEmpty) {
+    //   await _prefService.saveAuthToken(registrationResponse.token);
+    //   await _prefService.setLoggedIn(true);
 
-      if (registrationResponse.refreshToken != null &&
-          registrationResponse.refreshToken!.isNotEmpty) {
-        await _prefService.saveRefreshToken(registrationResponse.refreshToken!);
-      }
-    }
+    //   if (registrationResponse.refreshToken != null &&
+    //       registrationResponse.refreshToken!.isNotEmpty) {
+    //     await _prefService.saveRefreshToken(registrationResponse.refreshToken!);
+    //   }
+    // }
 
-    if (registrationResponse.id != null) {
-      final user = registrationResponse.toUserModel();
+    if (registrationResponse.data!.id != null) {
+      final user = registrationResponse;
       await _prefService.saveUserData(user.toJson());
-      await _prefService.saveUserId(user.id);
+      await _prefService.saveUserId(user.data!.id.toString());
     }
 
     return registrationResponse;
