@@ -19,6 +19,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RegisterEvent>(_onRegister);
     on<LogoutEvent>(_onLogout);
     on<ForgotPasswordEvent>(_onForgotPassword);
+    on<ResetPasswordEvent>(_onResetPassword);
   }
 
   Future<void> _onCheckAuthStatus(
@@ -123,6 +124,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.mForgotPasswordRequest,
       );
       emit(ForgotPasswordSuccess(response: response));
+    } on AppExceptionHandler catch (e) {
+      emit(AuthError(
+        title: e.exTitle,
+        message: e.exMsg,
+        statusCode: e.statusCode,
+      ));
+    } catch (e) {
+      emit(AuthError(
+        title: 'Error',
+        message: e.toString(),
+      ));
+    }
+  }
+
+  Future<void> _onResetPassword(
+    ResetPasswordEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final response = await _authRepository.resetPassword(
+        event.mResetPasswordRequest,
+      );
+      emit(ResetPasswordSuccess(response: response));
     } on AppExceptionHandler catch (e) {
       emit(AuthError(
         title: e.exTitle,

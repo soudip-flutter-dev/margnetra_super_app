@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:margnetra_super_app/pages/profile_page/data/models/vehicle_model.dart';
+import 'package:margnetra_super_app/pages/profile_page/data/models/vehicle_registration_request_model.dart';
 
 abstract class VehicleEvent extends Equatable {
   const VehicleEvent();
@@ -14,6 +15,14 @@ class LoadVehiclesEvent extends VehicleEvent {
 
   @override
   List<Object?> get props => [forceRefresh];
+}
+
+class RegisterVehicleEvent extends VehicleEvent {
+  final VehicleRegistrationRequestModel request;
+  const RegisterVehicleEvent(this.request);
+
+  @override
+  List<Object?> get props => [request];
 }
 
 class AddVehicleEvent extends VehicleEvent {

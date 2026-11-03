@@ -5,30 +5,36 @@ class LogoutRequestModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'refresh_token': refreshToken,
+      'refreshToken': refreshToken,
     };
   }
 
   factory LogoutRequestModel.fromJson(Map<String, dynamic> json) {
     return LogoutRequestModel(
-      refreshToken: json['refresh_token'] ?? '',
+      refreshToken: json['refreshToken'] ?? json['refresh_token'] ?? '',
     );
   }
 }
 
 class LogoutResponseModel {
-  final String message;
+  final bool? success;
+  final String? message;
 
-  LogoutResponseModel({required this.message});
+  LogoutResponseModel({
+    this.success,
+    this.message,
+  });
 
   factory LogoutResponseModel.fromJson(Map<String, dynamic> json) {
     return LogoutResponseModel(
-      message: json['message'] ?? '',
+      success: json['success'] as bool?,
+      message: json['message'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'success': success,
       'message': message,
     };
   }

@@ -8,6 +8,8 @@ class SharedPrefKeys {
   static const String userProfile = 'user_profile';
   static const String appSettings = 'app_settings';
   static const String cachedVehicles = 'cached_vehicles';
+  static const String registeredVehicle = 'registered_vehicle';
   static const String themeMode = 'theme_mode';
   static const String isFirstTimeUser = 'is_first_time_user';
+  static const String isVehicleRegistered = 'is_vehicle_registered';
 }

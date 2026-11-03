@@ -25,46 +25,45 @@ class MockUserRepository implements IUserRepository {
   Future<UserProfileModel> getUserProfile() async {
     if (shouldFail) throw Exception('Network error');
     return const UserProfileModel(
-      id: 1,
-      fullName: 'Alice Test',
-      phone: '+919876543210',
-      email: 'alice@test.com',
-      avatarUrl: 'https://cdn.example.com/alice.jpg',
-      civilScore: 82.5,
-      drivingStreakDays: 14,
-      mgcBalance: 250.0,
-      isActive: true,
-      isVerified: true,
+      success: true,
+      message: 'Profile loaded',
+      data: Data(
+        userId: '1',
+        fullName: 'Alice Test',
+        phoneNumber: '+919876543210',
+        email: 'alice@test.com',
+        civilScore: 82,
+      ),
     );
   }
 
   @override
   Future<UserProfileModel> updateUserProfile({String? fullName, String? email}) async {
     return UserProfileModel(
-      id: 1,
-      fullName: fullName ?? 'Alice Test',
-      phone: '+919876543210',
-      email: email ?? 'alice@test.com',
-      civilScore: 82.5,
-      drivingStreakDays: 14,
-      mgcBalance: 250.0,
-      isActive: true,
-      isVerified: true,
+      success: true,
+      message: 'Profile updated',
+      data: Data(
+        userId: '1',
+        fullName: fullName ?? 'Alice Test',
+        phoneNumber: '+919876543210',
+        email: email ?? 'alice@test.com',
+        civilScore: 82,
+      ),
     );
   }
 
   @override
   Future<UserProfileModel> uploadAvatar(String filePath) async {
     return const UserProfileModel(
-      id: 1,
-      fullName: 'Alice Test',
-      phone: '+919876543210',
-      avatarUrl: 'https://cdn.example.com/new_avatar.jpg',
-      civilScore: 82.5,
-      drivingStreakDays: 14,
-      mgcBalance: 250.0,
-      isActive: true,
-      isVerified: true,
+      success: true,
+      message: 'Avatar uploaded',
+      data: Data(
+        userId: '1',
+        fullName: 'Alice Test',
+        phoneNumber: '+919876543210',
+        email: 'alice@test.com',
+        civilScore: 82,
+      ),
     );
   }
 
@@ -93,6 +92,26 @@ class MockUserRepository implements IUserRepository {
   }
 
   @override
+  Future<VehicleRegistrationResponseModel> registerVehicle(
+    VehicleRegistrationRequestModel request,
+  ) async {
+    return VehicleRegistrationResponseModel(
+      success: true,
+      message: 'Vehicle registered successfully',
+      data: VehicleRegistrationData(
+        id: 'mock-id-123',
+        registrationNumber: request.registrationNumber,
+        vehicleType: request.vehicleType,
+        make: request.make,
+        model: request.model,
+        fuelType: request.fuelType,
+        year: request.year,
+        chassisNumber: request.chassisNumber,
+      ),
+    );
+  }
+
+  @override
   Future<VehicleModel> addVehicle(VehicleCreateRequest request) async {
     return VehicleModel(
       id: 11,
@@ -118,12 +137,15 @@ class MockUserRepository implements IUserRepository {
   }
 
   @override
-  Future<PaymentMethodModel> addPaymentMethod({required String type, required String identifier, bool isPrimary = false}) async {
+  Future<PaymentMethodModel> addPaymentMethod({
+    required String type,
+    required String identifier,
+  }) async {
     return PaymentMethodModel(
       id: 6,
       type: type,
       identifier: identifier,
-      isDefault: isPrimary,
+      isDefault: false,
     );
   }
 
@@ -131,10 +153,8 @@ class MockUserRepository implements IUserRepository {
   Future<AppSettingsModel> getAppSettings() async {
     return const AppSettingsModel(
       notificationsEnabled: true,
-      locationSharing: true,
-      darkMode: true,
+      darkMode: false,
       language: 'en',
-      hudOverlay: false,
     );
   }
 
@@ -153,21 +173,23 @@ void main() {
     });
 
     test('Data Models JSON roundtrip serialization', () {
-      final profile = const UserProfileModel(
-        id: 1,
-        fullName: 'Bob Smith',
-        phone: '9876543210',
-        civilScore: 75.0,
-        drivingStreakDays: 5,
-        mgcBalance: 120.0,
+      const profile = UserProfileModel(
+        success: true,
+        message: 'Success',
+        data: Data(
+          userId: '1',
+          fullName: 'Bob Smith',
+          phoneNumber: '9876543210',
+          civilScore: 75,
+        ),
       );
       final json = profile.toJson();
       final decoded = UserProfileModel.fromJson(json);
-      expect(decoded.id, 1);
+      expect(decoded.userId, '1');
       expect(decoded.fullName, 'Bob Smith');
-      expect(decoded.civilScore, 75.0);
+      expect(decoded.civilScore, 75);
 
-      final vehicle = const VehicleModel(
+      const vehicle = VehicleModel(
         id: 2,
         registrationNumber: 'KA05MH9999',
         make: 'Tata',
@@ -181,7 +203,7 @@ void main() {
       expect(vDecoded.registrationNumber, 'KA05MH9999');
       expect(vDecoded.fuelType, 'ev');
 
-      final settings = const AppSettingsModel(
+      const settings = AppSettingsModel(
         notificationsEnabled: false,
         darkMode: true,
         language: 'hi',
@@ -194,12 +216,14 @@ void main() {
 
     test('ProfileBloc emits cached state then refreshed state from API', () async {
       mockRepo.cachedProfile = const UserProfileModel(
-        id: 1,
-        fullName: 'Cached Alice',
-        phone: '12345',
-        civilScore: 70.0,
-        drivingStreakDays: 2,
-        mgcBalance: 50.0,
+        success: true,
+        message: 'Cached',
+        data: Data(
+          userId: '1',
+          fullName: 'Cached Alice',
+          phoneNumber: '12345',
+          civilScore: 70,
+        ),
       );
 
       final bloc = ProfileBloc(userRepository: mockRepo);

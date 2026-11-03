@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:margnetra_super_app/core/app_page_route/app_page_route.dart';
+import 'package:margnetra_super_app/core/app_services/local_storage/shared_pref_service.dart';
 import 'package:margnetra_super_app/core/global_widgets/app_button_widget.dart';
 import 'package:margnetra_super_app/core/global_widgets/app_text_field.dart';
 import 'package:margnetra_super_app/core/utils/app_colors.dart';
@@ -10,6 +11,7 @@ import 'package:margnetra_super_app/core/utils/custom_snack_bar.dart';
 import 'package:margnetra_super_app/core/utils/responsive.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/models/auth_login_request_model.dart';
 import 'package:margnetra_super_app/pages/auth_page/logic/blocs/auth_bloc/auth_bloc.dart';
+import 'package:margnetra_super_app/pages/profile_page/data/repositories/user_repository.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -25,6 +27,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isObscurePasswordText = true;
   bool _isPasswordVisible = false;
+  bool _isCheckingVehicles = false;
 
   @override
   void initState() {
@@ -56,20 +59,42 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is AuthAuthenticated) {
+          setState(() {
+            _isCheckingVehicles = true;
+          });
+
+          // Check whether vehicle is registered or not
+          try {
+            final userRepo = UserRepository();
+            final profile = await userRepo.getUserProfile();
+            if (profile.vehiclesCount > 0) {
+              await SharedPrefService.instance.setVehicleRegistered(true);
+            }
+            final vehicles = await userRepo.getVehicles();
+            if (vehicles.isNotEmpty) {
+              await SharedPrefService.instance.setVehicleRegistered(true);
+              await SharedPrefService.instance
+                  .saveRegisteredVehicle(vehicles.first.toJson());
+            }
+          } catch (_) {}
+
+          if (!context.mounted) return;
           CustomSnackBar.showSuccess(context, "Login successful!");
           Navigator.pushReplacementNamed(
             context,
-            // AppPageRoute.speedometerPage,
             AppPageRoute.navigationHomePage,
           );
         } else if (state is AuthError) {
+          setState(() {
+            _isCheckingVehicles = false;
+          });
           CustomSnackBar.showError(context, state.message);
         }
       },
       builder: (context, state) {
-        final isLoading = state is AuthLoading;
+        final isLoading = state is AuthLoading || _isCheckingVehicles;
 
         return Scaffold(
           backgroundColor: AppColors.background,

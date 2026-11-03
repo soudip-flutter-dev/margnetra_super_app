@@ -8,17 +8,17 @@ class RefreshTokanResponse {
   RefreshTokanResponse.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     message = json['message'];
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['success'] = this.success;
-    data['message'] = this.message;
-    if (this.data != null) {
-      data['data'] = this.data!.toJson();
+    final Map<String, dynamic> map = <String, dynamic>{};
+    map['success'] = success;
+    map['message'] = message;
+    if (data != null) {
+      map['data'] = data!.toJson();
     }
-    return data;
+    return map;
   }
 }
 
@@ -41,19 +41,19 @@ class Data {
     refreshToken = json['refreshToken'];
     tokenType = json['tokenType'];
     expiresIn = json['expiresIn'];
-    user = json['user'] != null ? new User.fromJson(json['user']) : null;
+    user = json['user'] != null ? User.fromJson(json['user']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['accessToken'] = this.accessToken;
-    data['refreshToken'] = this.refreshToken;
-    data['tokenType'] = this.tokenType;
-    data['expiresIn'] = this.expiresIn;
-    if (this.user != null) {
-      data['user'] = this.user!.toJson();
+    final Map<String, dynamic> map = <String, dynamic>{};
+    map['accessToken'] = accessToken;
+    map['refreshToken'] = refreshToken;
+    map['tokenType'] = tokenType;
+    map['expiresIn'] = expiresIn;
+    if (user != null) {
+      map['user'] = user!.toJson();
     }
-    return data;
+    return map;
   }
 }
 
@@ -71,10 +71,10 @@ class User {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['fullName'] = this.fullName;
-    data['email'] = this.email;
-    return data;
+    final Map<String, dynamic> map = <String, dynamic>{};
+    map['id'] = id;
+    map['fullName'] = fullName;
+    map['email'] = email;
+    return map;
   }
 }

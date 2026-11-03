@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:margnetra_super_app/core/app_services/local_storage/shared_pref_service.dart';
 import 'package:margnetra_super_app/main.dart';
 import 'package:margnetra_super_app/pages/all_nav_pages/family_circle_page/family_circle_page.dart';
 import 'package:margnetra_super_app/pages/splash_screen/splash_screen.dart';
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    await SharedPrefService.init();
+  });
+
   testWidgets('MargNetra splash screen loads the app branding', (tester) async {
     await tester.pumpWidget(const MyApp());
 
     expect(find.text('MARGNETRA'), findsOneWidget);
     expect(find.text('TRUSTED MOBILITY & REWARDS'), findsOneWidget);
     expect(find.byType(MargNetraSplash), findsOneWidget);
+
+    await tester.pumpAndSettle(const Duration(seconds: 4));
   });
 
   testWidgets('Family Circle switches between map and list views', (

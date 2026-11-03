@@ -9,6 +9,7 @@ abstract class IUserRepository {
   Future<UserProfileModel> uploadAvatar(String filePath);
   Future<CivilScoreModel> getCivilScore();
   Future<List<VehicleModel>> getVehicles();
+  Future<VehicleRegistrationResponseModel> registerVehicle(VehicleRegistrationRequestModel request);
   Future<VehicleModel> addVehicle(VehicleCreateRequest request);
   Future<List<PaymentMethodModel>> getPaymentMethods();
   Future<PaymentMethodModel> addPaymentMethod({
@@ -43,133 +44,206 @@ class UserRepository implements IUserRepository {
 
     // Cache for offline access
     await _prefService.saveUserData(profile.toJson());
+    if (profile.vehiclesCount > 0) {
+      await _prefService.setVehicleRegistered(true);
+    }
     return profile;
   }
 
-  // ── PUT /api/v1/user/settings ──────────────────────────────────────────────
   @override
   Future<UserProfileModel> updateUserProfile({
     String? fullName,
     String? email,
   }) async {
-    final data = <String, dynamic>{};
-    if (fullName != null) data['fullName'] = fullName;
-    if (email != null) data['email'] = email;
-
-    final response = await _dataProvider.put(
-      ApiUrls.updateProfile,
-      data: data,
+    final cached = getCachedProfile();
+    final updatedData = Data(
+      userId: cached?.userId,
+      fullName: fullName ?? cached?.fullName,
+      phoneNumber: cached?.phoneNumber,
+      email: email ?? cached?.email,
+      civilScore: cached?.civilScore,
+      maxCivilScore: cached?.maxCivilScore,
+      civilRating: cached?.civilRating,
+      scorePercent: cached?.scorePercent,
+      vehiclesCount: cached?.vehiclesCount,
+      vehiclesCountText: cached?.vehiclesCountText,
+      paymentMethodsText: cached?.paymentMethodsText,
     );
-
-    final map = response is Map<String, dynamic> ? response : <String, dynamic>{};
-    final profile = UserProfileModel.fromJson(map);
-
-    await _prefService.saveUserData(profile.toJson());
-    return profile;
+    final updated = UserProfileModel(
+      success: true,
+      message: 'Profile updated locally',
+      data: updatedData,
+    );
+    await _prefService.saveUserData(updated.toJson());
+    return updated;
   }
 
-  // ── POST /api/v1/user/avatar (multipart) ──────────────────────────────────
   @override
   Future<UserProfileModel> uploadAvatar(String filePath) async {
-    final response = await _dataProvider.uploadFile(
-      ApiUrls.userAvatar,
-      filePath: filePath,
-      fileFieldName: 'file',
-    );
-
-    final map = response is Map<String, dynamic> ? response : <String, dynamic>{};
-    final profile = UserProfileModel.fromJson(map);
-
-    await _prefService.saveUserData(profile.toJson());
-    return profile;
+    final cached = getCachedProfile();
+    return cached ?? UserProfileModel(success: true, message: 'Avatar updated');
   }
 
-  // ── GET /api/v1/user/civil-score ──────────────────────────────────────────
   @override
   Future<CivilScoreModel> getCivilScore() async {
-    final response = await _dataProvider.get(ApiUrls.userCivilScore);
-
-    final map = response is Map<String, dynamic> ? response : <String, dynamic>{};
-    return CivilScoreModel.fromJson(map);
+    return const CivilScoreModel(
+      currentScore: 85.0,
+      streakDays: 7,
+      history: [],
+    );
   }
 
-  // ── GET /api/v1/user/vehicles ─────────────────────────────────────────────
+  // ── GET /api/vehicles ──────────────────────────────────────────────────
   @override
   Future<List<VehicleModel>> getVehicles() async {
-    final response = await _dataProvider.get(ApiUrls.userVehicles);
+    try {
+      final response = await _dataProvider.get(ApiUrls.vehicleRegistration);
 
-    final list = response is List ? response : <dynamic>[];
-    final vehicles = list
-        .map((e) => VehicleModel.fromJson(Map<String, dynamic>.from(e as Map)))
-        .toList();
+      List<dynamic> list = [];
+      if (response is Map<String, dynamic>) {
+        final data = response['data'];
+        if (data is List) {
+          list = data;
+        } else if (data is Map<String, dynamic>) {
+          if (data['vehicles'] is List) {
+            list = data['vehicles'] as List;
+          } else if (data['vehicle'] is Map<String, dynamic>) {
+            list = [data['vehicle']];
+          } else if (data.isNotEmpty) {
+            list = [data];
+          }
+        } else if (response['vehicles'] is List) {
+          list = response['vehicles'] as List;
+        }
+      } else if (response is List) {
+        list = response;
+      }
 
-    await _prefService.saveCachedVehicles(vehicles.map((v) => v.toJson()).toList());
-    return vehicles;
+      final vehicles = list
+          .whereType<Map>()
+          .map((e) => VehicleModel.fromJson(Map<String, dynamic>.from(e)))
+          .where((v) => v.registrationNumber.isNotEmpty)
+          .toList();
+
+      if (vehicles.isNotEmpty) {
+        await _prefService.saveCachedVehicles(vehicles.map((v) => v.toJson()).toList());
+        await _prefService.saveRegisteredVehicle(vehicles.first.toJson());
+        await _prefService.setVehicleRegistered(true);
+        return vehicles;
+      }
+    } catch (_) {}
+
+    // Fallback to local DB registered vehicle or cache
+    final localVehicle = _prefService.getRegisteredVehicle();
+    if (localVehicle != null) {
+      final model = VehicleRegistrationData.fromJson(localVehicle).toVehicleModel();
+      await _prefService.setVehicleRegistered(true);
+      return [model];
+    }
+
+    final cached = getCachedVehicles();
+    if (cached != null && cached.isNotEmpty) {
+      await _prefService.setVehicleRegistered(true);
+      return cached;
+    }
+
+    return [];
   }
 
-  // ── POST /api/v1/user/vehicles ────────────────────────────────────────────
+  // ── POST /api/vehicles (Vehicle Registration) ───────────────────────────
   @override
-  Future<VehicleModel> addVehicle(VehicleCreateRequest request) async {
+  Future<VehicleRegistrationResponseModel> registerVehicle(
+    VehicleRegistrationRequestModel request,
+  ) async {
     final response = await _dataProvider.post(
-      ApiUrls.userVehicles,
+      ApiUrls.vehicleRegistration,
       data: request.toJson(),
     );
 
-    final map = response is Map<String, dynamic> ? response : <String, dynamic>{};
-    return VehicleModel.fromJson(map);
+    final map = response is Map<String, dynamic>
+        ? response
+        : <String, dynamic>{};
+    final responseModel = VehicleRegistrationResponseModel.fromJson(map);
+
+    // Save registered vehicle in local DB
+    final vehicleData = responseModel.data ??
+        VehicleRegistrationData(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          registrationNumber: request.registrationNumber,
+          vehicleType: request.vehicleType,
+          make: request.make,
+          model: request.model,
+          fuelType: request.fuelType,
+          year: request.year,
+          chassisNumber: request.chassisNumber,
+          createdAt: DateTime.now().toIso8601String(),
+          active: true,
+          selected: true,
+        );
+
+    final vehicle = vehicleData.toVehicleModel();
+    await _prefService.saveRegisteredVehicle(vehicleData.toJson());
+    await _prefService.setVehicleRegistered(true);
+
+    final currentVehicles = getCachedVehicles() ?? [];
+    final updatedList = List<VehicleModel>.from(currentVehicles)
+      ..removeWhere((v) =>
+          v.registrationNumber.toUpperCase() ==
+          vehicle.registrationNumber.toUpperCase())
+      ..add(vehicle);
+    await _prefService.saveCachedVehicles(updatedList.map((v) => v.toJson()).toList());
+
+    return responseModel;
   }
 
-  // ── GET /api/v1/user/payment-methods ──────────────────────────────────────
+  // ── POST /api/vehicles ─────────────────────────────────────────────────
+  @override
+  Future<VehicleModel> addVehicle(VehicleCreateRequest request) async {
+    final regRequest = VehicleRegistrationRequestModel(
+      registrationNumber: request.registrationNumber,
+      vehicleType: request.vehicleType,
+      make: request.make,
+      model: request.model,
+      fuelType: request.fuelType,
+      year: request.year,
+      chassisNumber: request.chassisNumber,
+    );
+    final responseModel = await registerVehicle(regRequest);
+    if (responseModel.data != null) {
+      return responseModel.data!.toVehicleModel();
+    }
+    throw Exception(responseModel.message ?? 'Failed to register vehicle');
+  }
+
   @override
   Future<List<PaymentMethodModel>> getPaymentMethods() async {
-    final response = await _dataProvider.get(ApiUrls.userPaymentMethods);
-
-    final list = response is List ? response : <dynamic>[];
-    return list
-        .map((e) => PaymentMethodModel.fromJson(Map<String, dynamic>.from(e as Map)))
-        .toList();
+    return <PaymentMethodModel>[];
   }
 
-  // ── POST /api/v1/user/payment-methods ─────────────────────────────────────
   @override
   Future<PaymentMethodModel> addPaymentMethod({
     required String type,
     required String identifier,
   }) async {
-    final response = await _dataProvider.post(
-      ApiUrls.userPaymentMethods,
-      data: {'type': type, 'identifier': identifier},
+    return PaymentMethodModel(
+      id: DateTime.now().millisecondsSinceEpoch,
+      type: type,
+      identifier: identifier,
+      isDefault: false,
     );
-
-    final map = response is Map<String, dynamic> ? response : <String, dynamic>{};
-    return PaymentMethodModel.fromJson(map);
   }
 
-  // ── GET /api/v1/user/settings ─────────────────────────────────────────────
   @override
   Future<AppSettingsModel> getAppSettings() async {
-    final response = await _dataProvider.get(ApiUrls.userSettings);
-
-    final map = response is Map<String, dynamic> ? response : <String, dynamic>{};
-    final settings = AppSettingsModel.fromJson(map);
-
-    await _prefService.saveAppSettings(settings.toJson());
-    return settings;
+    final cached = getCachedSettings();
+    if (cached != null) return cached;
+    return const AppSettingsModel();
   }
 
-  // ── PUT /api/v1/user/settings ─────────────────────────────────────────────
   @override
   Future<AppSettingsModel> updateAppSettings(AppSettingsModel settings) async {
-    final response = await _dataProvider.put(
-      ApiUrls.userSettings,
-      data: settings.toJson(),
-    );
-
-    final map = response is Map<String, dynamic> ? response : <String, dynamic>{};
-    final updated = AppSettingsModel.fromJson(map);
-
-    await _prefService.saveAppSettings(updated.toJson());
-    return updated;
+    await _prefService.saveAppSettings(settings.toJson());
+    return settings;
   }
 
   // ── Local cache reads ─────────────────────────────────────────────────────

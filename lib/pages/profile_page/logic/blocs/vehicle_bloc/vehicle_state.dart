@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:margnetra_super_app/pages/profile_page/data/models/vehicle_model.dart';
+import 'package:margnetra_super_app/pages/profile_page/data/models/vehicle_registration_response_model.dart';
 
 abstract class VehicleState extends Equatable {
   const VehicleState();
@@ -45,6 +46,19 @@ class VehicleLoaded extends VehicleState {
 
   @override
   List<Object?> get props => [vehicles, isSubmitting, submitError];
+}
+
+class VehicleRegistrationSuccess extends VehicleState {
+  final VehicleRegistrationResponseModel response;
+  final List<VehicleModel> vehicles;
+
+  const VehicleRegistrationSuccess({
+    required this.response,
+    this.vehicles = const [],
+  });
+
+  @override
+  List<Object?> get props => [response, vehicles];
 }
 
 class VehicleAddSuccess extends VehicleState {

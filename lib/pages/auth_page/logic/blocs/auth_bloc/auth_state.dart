@@ -52,6 +52,16 @@ class ForgotPasswordSuccess extends AuthState {
   List<Object?> get props => [response];
 }
 
+/// State when reset password request succeeds
+class ResetPasswordSuccess extends AuthState {
+  final ResetPasswordResponseModel response;
+
+  const ResetPasswordSuccess({required this.response});
+
+  @override
+  List<Object?> get props => [response];
+}
+
 /// State when an authentication operation fails
 class AuthError extends AuthState {
   final String title;

@@ -82,13 +82,18 @@ class DataProvider {
             name: 'Network',
             error: error.error,
           );
+          if (error.response?.data != null) {
+            developer.log('   Response Data: ${error.response?.data}',
+                name: 'Network');
+          }
 
           final isAuthRequest =
               error.requestOptions.path.endsWith(ApiUrls.login) ||
               error.requestOptions.path.endsWith(ApiUrls.register) ||
               error.requestOptions.path.endsWith(ApiUrls.refreshToken) ||
               error.requestOptions.path.endsWith(ApiUrls.forgotPassword) ||
-              error.requestOptions.path.endsWith(ApiUrls.resetPassword);
+              error.requestOptions.path.endsWith(ApiUrls.resetPassword) ||
+              error.requestOptions.path.endsWith(ApiUrls.logout);
 
           // ── 401 handling: attempt a token refresh ───────────
           if (error.response?.statusCode == 401 &&

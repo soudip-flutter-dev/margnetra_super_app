@@ -32,7 +32,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.profile.fullName);
-    _emailController = TextEditingController(text: widget.profile.email ?? '');
+    _emailController = TextEditingController(text: widget.profile.email);
   }
 
   @override

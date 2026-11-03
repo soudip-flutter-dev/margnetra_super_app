@@ -51,3 +51,13 @@ class ForgotPasswordEvent extends AuthEvent {
   List<Object?> get props => [mForgotPasswordRequest];
 }
 
+/// Event to reset user password with token
+class ResetPasswordEvent extends AuthEvent {
+  final ResetPasswordRequestModel mResetPasswordRequest;
+
+  const ResetPasswordEvent({required this.mResetPasswordRequest});
+
+  @override
+  List<Object?> get props => [mResetPasswordRequest];
+}
+

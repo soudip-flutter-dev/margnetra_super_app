@@ -45,6 +45,7 @@ class SpeedService {
       StreamController<SpeedServiceStatus>.broadcast();
 
   StreamSubscription<Position>? _positionSubscription;
+  Position? _lastPosition;
   SpeedServiceStatus _status = SpeedServiceStatus.initial;
   String? _errorMessage;
 
@@ -56,6 +57,9 @@ class SpeedService {
 
   /// Current status snapshot.
   SpeedServiceStatus get currentStatus => _status;
+
+  /// Last known GPS position.
+  Position? get lastPosition => _lastPosition;
 
   /// Last error message, if any.
   String? get errorMessage => _errorMessage;
@@ -108,6 +112,7 @@ class SpeedService {
         locationSettings: locationSettings,
       ).listen(
         (Position position) {
+          _lastPosition = position;
           // Process raw speed (treat negative values as 0, smooth 3 readings, suppress < 1.5 km/h)
           final double smoothedSpeedMps = _filter.process(position.speed);
           if (!_speedController.isClosed) {

@@ -17,16 +17,25 @@ class ApiUrls {
   static const String resetPassword = '/api/auth/reset-password';
   static const String refreshToken = '/api/auth/refresh';
 
+// ------vehicle api--------------
+   static const String vehicleRegistration = "/api/vehicles";
   // ── Profile / User endpoints ───────────────────────────────────────────────
   static const String userProfile = '/api/auth/me';
-  static const String updateProfile = '/api/v1/user/profile';
-  static const String userAvatar = '/api/v1/user/avatar';
-  static const String userCivilScore = '/api/v1/user/civil-score';
-  static const String userVehicles = '/api/v1/user/vehicles';
-  static const String userPaymentMethods = '/api/v1/user/payment-methods';
-  static const String userSettings = '/api/v1/user/settings';
+  
+  // ── Telemetry WebSocket endpoints ──────────────────────────────────────────
+  static const String defaultTelemetryToken =
+      'eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhOGE0OWU3Yy05Y2YyLTRjZDEtOTc3ZC04OWM3NTAzYWVhZjUiLCJlbWFpbCI6ImNoYW5kc2lAZ21haWwuY29tIiwiZnVsbE5hbWUiOiJDaGFuZHNpIFNvbGFua2kiLCJpc3MiOiJtYXJnZW50cmEtYmFja2VuZCIsImlhdCI6MTc5MzYwMzAzMCwiZXhwIjoxNzkzNjAzOTMwfQ.b8rZHdORLK9UXbfKXHFDWimwBwbq2sVUNcG0LsWnIiP0VbiR2cjZCqh0J2ClZOix';
+
+  static const String defaultTelemetryVehicleId =
+      'ee344c8c-b968-421e-a3ed-65a0e6c9aa81';
+
+  static const String telemetrySocketBase = 'https://margentrabackend.onrender.com/ws/telemetry';
+
+  static String getTelemetrySocketUrl({String? token}) {
+    final t = token ?? defaultTelemetryToken;
+    return '$telemetrySocketBase?token=$t';
+  }
 
   // ── MargNetra App specific endpoints ──────────────────────────────────────
-  static const String emergencySos = '/api/v1/sos/trigger';
-  static const String bountyReports = '/api/v1/bounty/events';
+  
 }

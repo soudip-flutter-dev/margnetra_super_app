@@ -1,16 +1,18 @@
 import 'package:equatable/equatable.dart';
 
 class UserProfileModel extends Equatable {
-  bool? success;
-  String? message;
-  Data? data;
+  final bool? success;
+  final String? message;
+  final Data? data;
 
-  UserProfileModel({this.success, this.message, this.data});
+  const UserProfileModel({this.success, this.message, this.data});
 
-  UserProfileModel.fromJson(Map<String, dynamic> json) {
-    success = json['success'];
-    message = json['message'];
-    data = json['data'] != null ? Data.fromJson(json['data']) : null;
+  factory UserProfileModel.fromJson(Map<String, dynamic> json) {
+    return UserProfileModel(
+      success: json['success'] as bool?,
+      message: json['message'] as String?,
+      data: json['data'] != null ? Data.fromJson(json['data']) : null,
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -40,19 +42,19 @@ class UserProfileModel extends Equatable {
 }
 
 class Data extends Equatable {
-  String? userId;
-  String? fullName;
-  String? phoneNumber;
-  String? email;
-  int? civilScore;
-  int? maxCivilScore;
-  String? civilRating;
-  double? scorePercent;
-  int? vehiclesCount;
-  String? vehiclesCountText;
-  String? paymentMethodsText;
+  final String? userId;
+  final String? fullName;
+  final String? phoneNumber;
+  final String? email;
+  final int? civilScore;
+  final int? maxCivilScore;
+  final String? civilRating;
+  final double? scorePercent;
+  final int? vehiclesCount;
+  final String? vehiclesCountText;
+  final String? paymentMethodsText;
 
-  Data({
+  const Data({
     this.userId,
     this.fullName,
     this.phoneNumber,
@@ -66,26 +68,28 @@ class Data extends Equatable {
     this.paymentMethodsText,
   });
 
-  Data.fromJson(Map<String, dynamic> json) {
-    userId = json['userId']?.toString();
-    fullName = json['fullName']?.toString();
-    phoneNumber = json['phoneNumber']?.toString();
-    email = json['email']?.toString();
-    civilScore = json['civilScore'] is int
-        ? json['civilScore'] as int
-        : int.tryParse(json['civilScore']?.toString() ?? '0');
-    maxCivilScore = json['maxCivilScore'] is int
-        ? json['maxCivilScore'] as int
-        : int.tryParse(json['maxCivilScore']?.toString() ?? '1000');
-    civilRating = json['civilRating']?.toString();
-    scorePercent = json['scorePercent'] is num
-        ? (json['scorePercent'] as num).toDouble()
-        : double.tryParse(json['scorePercent']?.toString() ?? '0');
-    vehiclesCount = json['vehiclesCount'] is int
-        ? json['vehiclesCount'] as int
-        : int.tryParse(json['vehiclesCount']?.toString() ?? '0');
-    vehiclesCountText = json['vehiclesCountText']?.toString();
-    paymentMethodsText = json['paymentMethodsText']?.toString();
+  factory Data.fromJson(Map<String, dynamic> json) {
+    return Data(
+      userId: json['userId']?.toString(),
+      fullName: json['fullName']?.toString(),
+      phoneNumber: json['phoneNumber']?.toString(),
+      email: json['email']?.toString(),
+      civilScore: json['civilScore'] is int
+          ? json['civilScore'] as int
+          : int.tryParse(json['civilScore']?.toString() ?? '0'),
+      maxCivilScore: json['maxCivilScore'] is int
+          ? json['maxCivilScore'] as int
+          : int.tryParse(json['maxCivilScore']?.toString() ?? '1000'),
+      civilRating: json['civilRating']?.toString(),
+      scorePercent: json['scorePercent'] is num
+          ? (json['scorePercent'] as num).toDouble()
+          : double.tryParse(json['scorePercent']?.toString() ?? '0'),
+      vehiclesCount: json['vehiclesCount'] is int
+          ? json['vehiclesCount'] as int
+          : int.tryParse(json['vehiclesCount']?.toString() ?? '0'),
+      vehiclesCountText: json['vehiclesCountText']?.toString(),
+      paymentMethodsText: json['paymentMethodsText']?.toString(),
+    );
   }
 
   Map<String, dynamic> toJson() => {

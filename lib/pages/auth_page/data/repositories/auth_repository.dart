@@ -10,6 +10,7 @@ abstract class IAuthRepository {
   Future<LoginResponseModel> login(LoginRequestModel request);
   Future<RegistrationResponseModel> register(RegisterRequestModel request);
   Future<ForgotPasswordResponseModel> forgotPassword(ForgotPasswordRequestModel request);
+  Future<ResetPasswordResponseModel> resetPassword(ResetPasswordRequestModel request);
   Future<UserModel> getUserProfile();
   Future<LogoutResponseModel?> logout({String? refreshToken});
   Future<RefreshTokanResponse> refreshTokan({String? refreshTokan});
@@ -97,6 +98,19 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
   }
 
   @override
+  Future<ResetPasswordResponseModel> resetPassword(
+      ResetPasswordRequestModel request) async {
+    final response = await _dataProvider.post(
+      ApiUrls.resetPassword,
+      data: request.toJson(),
+    );
+
+    return ResetPasswordResponseModel.fromJson(
+      response is Map<String, dynamic> ? response : <String, dynamic>{},
+    );
+  }
+
+  @override
   Future<UserModel> getUserProfile() async {
     // Bearer token is attached automatically by the interceptor.
     final response = await _dataProvider.get(ApiUrls.userProfile);
@@ -112,18 +126,29 @@ class AuthRepository extends BaseRepository implements IAuthRepository {
 
   @override
   Future<LogoutResponseModel?> logout({String? refreshToken}) async {
-    final token = refreshToken ?? _prefService.getRefreshToken() ?? '';
+    final token = refreshToken ?? _prefService.getRefreshToken();
     LogoutResponseModel? logoutResponse;
     try {
-      final response = await _dataProvider.post(
-        ApiUrls.logout,
-        data: LogoutRequestModel(refreshToken: token).toJson(),
-      );
-      if (response is Map<String, dynamic>) {
-        logoutResponse = LogoutResponseModel.fromJson(response);
+      if (token != null && token.trim().isNotEmpty) {
+        final response = await _dataProvider.post(
+          ApiUrls.logout,
+          data: LogoutRequestModel(refreshToken: token.trim()).toJson(),
+        );
+        if (response is Map<String, dynamic>) {
+          logoutResponse = LogoutResponseModel.fromJson(response);
+        }
       }
+      logoutResponse ??= LogoutResponseModel(
+        success: true,
+        message: 'Logged out successfully',
+      );
     } catch (_) {
-      // Ignore network errors on logout to allow local sign out
+      // Even if network or backend returns an error (e.g. 400 Bad Request if token was already invalidated),
+      // allow sign out to complete locally so the user is never stuck.
+      logoutResponse = LogoutResponseModel(
+        success: true,
+        message: 'Logged out successfully',
+      );
     } finally {
       await _prefService.clearAuthSession();
     }

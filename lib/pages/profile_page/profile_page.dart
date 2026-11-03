@@ -87,7 +87,8 @@ class ProfileWidget extends StatelessWidget {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, authState) {
         if (authState is AuthUnauthenticated) {
-          CustomSnackBar.showSuccess(context, 'Logged out successfully');
+          CustomSnackBar.showSuccess(
+              context, authState.message ?? 'Logged out successfully');
           Navigator.pushNamedAndRemoveUntil(
               context, AppPageRoute.loginPage, (route) => false);
         } else if (authState is AuthError) {

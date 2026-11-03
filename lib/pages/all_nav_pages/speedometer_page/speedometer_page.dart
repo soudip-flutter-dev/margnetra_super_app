@@ -1,11 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:margnetra_super_app/core/app_services/local_storage/shared_pref_service.dart';
 import 'package:margnetra_super_app/core/app_services/speed_service/speed_service.dart';
+import 'package:margnetra_super_app/pages/all_nav_pages/speedometer_page/logic/blocs/speedometer_socket_bloc/speedometer_socket_bloc.dart';
+import 'package:margnetra_super_app/pages/all_nav_pages/speedometer_page/widgets/socket_status_badge.dart';
+import 'package:margnetra_super_app/pages/profile_page/data/repositories/user_repository.dart';
+import 'package:margnetra_super_app/pages/profile_page/logic/blocs/vehicle_bloc/vehicle_bloc.dart';
+import 'package:margnetra_super_app/pages/profile_page/widgets/add_vehicle_bottom_sheet.dart';
 import 'widgets/permission_error_card.dart';
 import 'widgets/speed_gauge_view.dart';
 
 /// SpeedometerScreen shows real-time GPS vehicle speed with unit toggles,
-/// a radial gauge, trip stats, and responsive permission/service handling.
+/// a radial gauge, live telemetry WebSocket connection, trip stats,
+/// and responsive permission/service handling.
 class SpeedometerScreen extends StatefulWidget {
   const SpeedometerScreen({super.key});
 
@@ -25,12 +33,99 @@ class _SpeedometerScreenState extends State<SpeedometerScreen> with WidgetsBindi
   SpeedServiceStatus _status = SpeedServiceStatus.checking;
   String? _errorMessage;
 
+  bool _isVehicleRegistered = false;
+  bool _isBottomSheetOpen = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     
+    _isVehicleRegistered = SharedPrefService.instance.isVehicleRegistered;
     _initializeLocationTracking();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<VehicleBloc>().add(const LoadVehiclesEvent());
+        context.read<SpeedometerSocketBloc>().add(const SpeedometerSocketConnect());
+        _checkVehicleStatusAndPromptIfNeeded();
+      }
+    });
+  }
+
+  Future<void> _checkVehicleStatusAndPromptIfNeeded() async {
+    // 1. If already registered according to local DB, no need to show bottomsheet
+    if (SharedPrefService.instance.isVehicleRegistered) {
+      if (!_isVehicleRegistered) {
+        setState(() {
+          _isVehicleRegistered = true;
+        });
+      }
+      return;
+    }
+
+    // 2. Check if registered on backend before prompting bottomsheet
+    try {
+      final userRepo = UserRepository();
+      final profile = await userRepo.getUserProfile();
+      if (profile.vehiclesCount > 0) {
+        await SharedPrefService.instance.setVehicleRegistered(true);
+        if (mounted) {
+          setState(() {
+            _isVehicleRegistered = true;
+          });
+        }
+        return;
+      }
+      final vehicles = await userRepo.getVehicles();
+      if (vehicles.isNotEmpty) {
+        await SharedPrefService.instance.setVehicleRegistered(true);
+        if (mounted) {
+          setState(() {
+            _isVehicleRegistered = true;
+          });
+        }
+        return; // Registered on server! DO NOT show bottomsheet!
+      }
+    } catch (_) {}
+
+    // 3. Not registered anywhere -> prompt registration bottomsheet
+    if (mounted && !SharedPrefService.instance.isVehicleRegistered) {
+      _checkAndPromptVehicleRegistration();
+    }
+  }
+
+  Future<void> _checkAndPromptVehicleRegistration() async {
+    if (!mounted || _isBottomSheetOpen) return;
+
+    if (SharedPrefService.instance.isVehicleRegistered) {
+      if (!_isVehicleRegistered) {
+        setState(() {
+          _isVehicleRegistered = true;
+        });
+      }
+      return;
+    }
+
+    _isBottomSheetOpen = true;
+    final result = await AddVehicleBottomSheet.show(context, isLocked: true);
+    _isBottomSheetOpen = false;
+
+    if (!mounted) return;
+
+    final registered = result == true || SharedPrefService.instance.isVehicleRegistered;
+    setState(() {
+      _isVehicleRegistered = registered;
+    });
+
+    // If bottom sheet was closed without registration and still not in local DB, re-prompt
+    if (!registered && !SharedPrefService.instance.isVehicleRegistered) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !SharedPrefService.instance.isVehicleRegistered) {
+          _checkAndPromptVehicleRegistration();
+        }
+      });
+    }
   }
 
   void _initializeLocationTracking() {
@@ -39,11 +134,24 @@ class _SpeedometerScreenState extends State<SpeedometerScreen> with WidgetsBindi
       if (!mounted) return;
       setState(() {
         _currentSpeedMps = speedMps;
-        print("_currentSpeedMps: $_currentSpeedMps");
         if (speedMps > _maxSpeedMps) {
           _maxSpeedMps = speedMps;
         }
       });
+
+      // Stream real-time telemetry to the WebSocket if vehicle is registered
+      if (_isVehicleRegistered) {
+        final double speedKmh = speedMps * 3.6;
+        final position = _speedService.lastPosition;
+
+        context.read<SpeedometerSocketBloc>().add(
+              SpeedometerSocketSendCurrentData(
+                speedKmh: double.parse(speedKmh.toStringAsFixed(1)),
+                latitude: position?.latitude,
+                longitude: position?.longitude,
+              ),
+            );
+      }
     });
 
     // 2. Listen to service & permission status updates
@@ -73,7 +181,6 @@ class _SpeedometerScreenState extends State<SpeedometerScreen> with WidgetsBindi
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    // Explicitly cancel subscriptions and clean up service
     _speedSubscription?.cancel();
     _statusSubscription?.cancel();
     _speedService.dispose();
@@ -82,98 +189,178 @@ class _SpeedometerScreenState extends State<SpeedometerScreen> with WidgetsBindi
 
   void _resetMaxSpeed() {
     setState(() {
-      _maxSpeedMps = _currentSpeedMps;
+      _maxSpeedMps = _isVehicleRegistered ? _currentSpeedMps : 0.0;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final double convertedCurrentSpeed = _selectedUnit.convertFromMps(_currentSpeedMps);
-    final double convertedMaxSpeed = _selectedUnit.convertFromMps(_maxSpeedMps);
+    final double effectiveCurrentSpeedMps = _isVehicleRegistered ? _currentSpeedMps : 0.0;
+    final double effectiveMaxSpeedMps = _isVehicleRegistered ? _maxSpeedMps : 0.0;
+    final double convertedCurrentSpeed = _selectedUnit.convertFromMps(effectiveCurrentSpeedMps);
+    final double convertedMaxSpeed = _selectedUnit.convertFromMps(effectiveMaxSpeedMps);
     final bool hasError = _status != SpeedServiceStatus.active &&
         _status != SpeedServiceStatus.checking &&
         _status != SpeedServiceStatus.initial;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF010A12),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        title: const Text(
-          'GPS SPEEDOMETER',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 2.0,
-            color: Colors.white,
+    return BlocListener<VehicleBloc, VehicleState>(
+      listener: (context, state) {
+        if (state is VehicleAddSuccess || state is VehicleRegistrationSuccess) {
+          SharedPrefService.instance.setVehicleRegistered(true);
+          setState(() {
+            _isVehicleRegistered = true;
+          });
+          if (_isBottomSheetOpen && Navigator.of(context).canPop()) {
+            Navigator.of(context, rootNavigator: true).maybePop(true);
+          }
+        } else if (state is VehicleLoaded) {
+          final isReg = state.vehicles.isNotEmpty || SharedPrefService.instance.isVehicleRegistered;
+          if (isReg) {
+            SharedPrefService.instance.setVehicleRegistered(true);
+            if (_isBottomSheetOpen && Navigator.of(context).canPop()) {
+              Navigator.of(context, rootNavigator: true).maybePop(true);
+            }
+            if (!_isVehicleRegistered) {
+              setState(() {
+                _isVehicleRegistered = true;
+              });
+            }
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF010A12),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
+          title: const Text(
+            'GPS SPEEDOMETER',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 2.0,
+              color: Colors.white,
+            ),
+          ),
+          actions: [
+            const SocketStatusBadge(),
+            const SizedBox(width: 8),
+            _buildGpsStatusBadge(),
+            const SizedBox(width: 12),
+          ],
         ),
-        actions: [
-          _buildGpsStatusBadge(),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Permission or Location service alert
-            if (hasError)
-              PermissionErrorCard(
-                status: _status,
-                errorMessage: _errorMessage,
-                onRetry: () => _speedService.startTracking(),
-                onOpenAppSettings: () => _speedService.openAppSettings(),
-                onOpenLocationSettings: () => _speedService.openLocationSettings(),
-              ),
-
-            // Top Control Bar: Unit toggle (km/h vs mph)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'UNITS',
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Vehicle registration lock alert if not registered
+              if (!_isVehicleRegistered)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  child: InkWell(
+                    onTap: _checkAndPromptVehicleRegistration,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A1C08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.lock, color: Color(0xFFFFB300), size: 20),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text(
+                              'Speedometer locked. Register your vehicle to view live GPS speed.',
+                              style: TextStyle(
+                                color: Color(0xFFFFD54F),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFB300),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'Register',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  _buildUnitToggle(),
-                ],
-              ),
-            ),
+                ),
 
-            // Main Speedometer Gauge
-            Expanded(
-              child: Center(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: SpeedGaugeView(
-                          currentSpeed: convertedCurrentSpeed,
-                          unit: _selectedUnit,
-                        ),
+              // Permission or Location service alert
+              if (hasError)
+                PermissionErrorCard(
+                  status: _status,
+                  errorMessage: _errorMessage,
+                  onRetry: () => _speedService.startTracking(),
+                  onOpenAppSettings: () => _speedService.openAppSettings(),
+                  onOpenLocationSettings: () => _speedService.openLocationSettings(),
+                ),
+
+              // Top Control Bar: Unit toggle (km/h vs mph)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'UNITS',
+                      style: TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
                       ),
-                    ],
+                    ),
+                    _buildUnitToggle(),
+                  ],
+                ),
+              ),
+
+              // Main Speedometer Gauge
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: SpeedGaugeView(
+                            currentSpeed: convertedCurrentSpeed,
+                            unit: _selectedUnit,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            // Bottom Trip & Stats Bar
-            _buildStatsFooter(convertedMaxSpeed),
-          ],
+              // Bottom Trip & Stats Bar with Live RPM
+              _buildStatsFooter(convertedMaxSpeed),
+            ],
+          ),
         ),
       ),
     );
@@ -206,7 +393,6 @@ class _SpeedometerScreenState extends State<SpeedometerScreen> with WidgetsBindi
         border: Border.all(color: dotColor.withValues(alpha: 0.4)),
       ),
       child: Row(
-        
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
@@ -303,78 +489,128 @@ class _SpeedometerScreenState extends State<SpeedometerScreen> with WidgetsBindi
             ? convertedMaxSpeed.toStringAsFixed(1)
             : convertedMaxSpeed.toStringAsFixed(0);
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F1E2E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+    return BlocBuilder<SpeedometerSocketBloc, SpeedometerSocketState>(
+      builder: (context, socketState) {
+        final int currentRpm = _isVehicleRegistered ? socketState.currentRpm : 0;
+
+        return Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F1E2E),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'MAX SPEED',
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
+              // Max Speed stat
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    formattedMax,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  const Text(
+                    'MAX SPEED',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _selectedUnit.label,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.cyanAccent,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  const SizedBox(height: 2),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        formattedMax,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _selectedUnit.label,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.cyanAccent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+
+              // Live RPM stat from telemetry
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'ENGINE RPM',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        currentRpm.toString(),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF00E5FF),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'RPM',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.cyanAccent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // Reset Max button
+              TextButton.icon(
+                onPressed: _resetMaxSpeed,
+                icon: const Icon(Icons.refresh, size: 16, color: Colors.white60),
+                label: const Text(
+                  'RESET',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFF131D2A),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
             ],
           ),
-          TextButton.icon(
-            onPressed: _resetMaxSpeed,
-            icon: const Icon(Icons.refresh, size: 16, color: Colors.white60),
-            label: const Text(
-              'RESET MAX',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.8,
-              ),
-            ),
-            style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFF131D2A),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

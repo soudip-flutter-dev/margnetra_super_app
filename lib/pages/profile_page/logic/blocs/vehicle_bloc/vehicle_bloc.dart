@@ -15,6 +15,7 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
       : _userRepository = userRepository,
         super(const VehicleInitial()) {
     on<LoadVehiclesEvent>(_onLoadVehicles);
+    on<RegisterVehicleEvent>(_onRegisterVehicle);
     on<AddVehicleEvent>(_onAddVehicle);
   }
 
@@ -35,6 +36,49 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
     } catch (e) {
       final message = e is AppExceptionHandler ? e.exMsg : e.toString();
       emit(VehicleError(message: message, cachedVehicles: cached));
+    }
+  }
+
+  Future<void> _onRegisterVehicle(
+    RegisterVehicleEvent event,
+    Emitter<VehicleState> emit,
+  ) async {
+    final currentState = state;
+    List<VehicleModel> currentList = [];
+    if (currentState is VehicleLoaded) {
+      currentList = currentState.vehicles;
+      emit(currentState.copyWith(isSubmitting: true, submitError: null));
+    }
+
+    try {
+      final responseModel = await _userRepository.registerVehicle(event.request);
+      final newVehicle = responseModel.data?.toVehicleModel();
+      final updatedList = newVehicle != null
+          ? (List<VehicleModel>.from(currentList)..add(newVehicle))
+          : currentList;
+
+      emit(VehicleRegistrationSuccess(
+        response: responseModel,
+        vehicles: updatedList,
+      ));
+
+      if (newVehicle != null) {
+        emit(VehicleAddSuccess(
+          vehicle: newVehicle,
+          vehicles: updatedList,
+          message: responseModel.message ?? 'Vehicle registered successfully',
+        ));
+      }
+
+      // Transition back to loaded state with updated list
+      emit(VehicleLoaded(vehicles: updatedList));
+    } catch (e) {
+      final message = e is AppExceptionHandler ? e.exMsg : e.toString();
+      if (currentState is VehicleLoaded) {
+        emit(currentState.copyWith(isSubmitting: false, submitError: message));
+      } else {
+        emit(VehicleLoaded(vehicles: currentList, submitError: message));
+      }
     }
   }
 

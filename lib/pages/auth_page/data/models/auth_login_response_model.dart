@@ -34,15 +34,15 @@ class Data {
       this.expiresIn,
       this.user});
 
- factory Data.fromJson(Map<String, dynamic> json) {
+  factory Data.fromJson(Map<String, dynamic> json) {
     return Data(
-     accessToken: json['accessToken'],
-     refreshToken: json['refreshToken'],
-     tokenType: json['tokenType'],
-     expiresIn: json['expiresIn'],
-     user: json['user'] != null ? User.fromJson(json['user']) : null,
-   );
-   }
+      accessToken: json['accessToken'] ?? json['access_token'],
+      refreshToken: json['refreshToken'] ?? json['refresh_token'],
+      tokenType: json['tokenType'] ?? json['token_type'],
+      expiresIn: json['expiresIn'] ?? json['expires_in'],
+      user: json['user'] != null ? User.fromJson(json['user']) : null,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
 "accessToken": accessToken,

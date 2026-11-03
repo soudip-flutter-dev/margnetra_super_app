@@ -124,13 +124,32 @@ class SharedPrefService {
     }
   }
 
-  /// Clears user authentication session data while preserving app preferences
+  Future<bool> saveRegisteredVehicle(Map<String, dynamic> vehicle) async {
+    await setJson(SharedPrefKeys.registeredVehicle, vehicle);
+    await setBool(SharedPrefKeys.isVehicleRegistered, true);
+    return true;
+  }
+
+  Map<String, dynamic>? getRegisteredVehicle() =>
+      getJson(SharedPrefKeys.registeredVehicle);
+
+  Future<bool> setVehicleRegistered(bool value) async =>
+      await setBool(SharedPrefKeys.isVehicleRegistered, value);
+
+  bool get isVehicleRegistered {
+    final flag = getBool(SharedPrefKeys.isVehicleRegistered, defaultValue: false);
+    if (flag) return true;
+    if (getRegisteredVehicle() != null) return true;
+    final cached = getCachedVehicles();
+    return cached != null && cached.isNotEmpty;
+  }
+
+  /// Clears user authentication session data while preserving registered vehicle & app preferences
   Future<void> clearAuthSession() async {
     await remove(SharedPrefKeys.accessToken);
     await remove(SharedPrefKeys.refreshToken);
     await remove(SharedPrefKeys.userId);
     await remove(SharedPrefKeys.userProfile);
-    await remove(SharedPrefKeys.cachedVehicles);
     await setBool(SharedPrefKeys.isLoggedIn, false);
   }
 }

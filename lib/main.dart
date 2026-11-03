@@ -8,6 +8,7 @@ import 'package:margnetra_super_app/pages/profile_page/data/repositories/user_re
 import 'package:margnetra_super_app/pages/profile_page/logic/blocs/profile_bloc/profile_bloc.dart';
 import 'package:margnetra_super_app/pages/profile_page/logic/blocs/settings_bloc/settings_bloc.dart';
 import 'package:margnetra_super_app/pages/profile_page/logic/blocs/vehicle_bloc/vehicle_bloc.dart';
+import 'package:margnetra_super_app/pages/all_nav_pages/speedometer_page/logic/blocs/speedometer_socket_bloc/speedometer_socket_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +46,9 @@ class MyApp extends StatelessWidget {
           create: (context) => SettingsBloc(
             userRepository: userRepository,
           )..add(const LoadSettingsEvent()),
+        ),
+        BlocProvider<SpeedometerSocketBloc>(
+          create: (context) => SpeedometerSocketBloc(),
         ),
       ],
       child: BlocBuilder<SettingsBloc, SettingsState>(
