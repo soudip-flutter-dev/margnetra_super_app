@@ -124,6 +124,20 @@ class SharedPrefService {
     }
   }
 
+  Future<bool> saveCachedDocuments(List<Map<String, dynamic>> docs) async =>
+      await setString(SharedPrefKeys.cachedDocuments, jsonEncode(docs));
+
+  List<Map<String, dynamic>>? getCachedDocuments() {
+    final raw = getString(SharedPrefKeys.cachedDocuments);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<bool> saveRegisteredVehicle(Map<String, dynamic> vehicle) async {
     await setJson(SharedPrefKeys.registeredVehicle, vehicle);
     await setBool(SharedPrefKeys.isVehicleRegistered, true);

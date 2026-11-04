@@ -19,6 +19,9 @@ class ApiUrls {
 
 // ------vehicle api--------------
    static const String vehicleRegistration = "/api/vehicles";
+
+  //  ----------vehicle document section--------------
+  static const String vehicleDocuments = "/api/documents";
   // ── Profile / User endpoints ───────────────────────────────────────────────
   static const String userProfile = '/api/auth/me';
   
@@ -29,11 +32,24 @@ class ApiUrls {
   static const String defaultTelemetryVehicleId =
       'ee344c8c-b968-421e-a3ed-65a0e6c9aa81';
 
-  static const String telemetrySocketBase = 'https://margentrabackend.onrender.com/ws/telemetry';
+  static const String telemetrySocketBase =
+      'wss://margentrabackend.onrender.com/ws/telemetry';
+  static const String telemetrySocketLocal =
+      'ws://localhost:8080/ws/telemetry';
+  static const String telemetrySocketEmulator =
+      'ws://10.0.2.2:8080/ws/telemetry';
 
-  static String getTelemetrySocketUrl({String? token}) {
+  static String getTelemetrySocketUrl({String? baseUrl, String? token}) {
+    final base = baseUrl ?? telemetrySocketBase;
+    final normalized = base.startsWith('https://')
+        ? 'wss://${base.substring(8)}'
+        : base.startsWith('http://')
+            ? 'ws://${base.substring(7)}'
+            : base;
+
     final t = token ?? defaultTelemetryToken;
-    return '$telemetrySocketBase?token=$t';
+    final separator = normalized.contains('?') ? '&' : '?';
+    return '$normalized${separator}token=$t';
   }
 
   // ── MargNetra App specific endpoints ──────────────────────────────────────

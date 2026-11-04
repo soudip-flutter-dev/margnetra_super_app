@@ -35,7 +35,8 @@ class TelemetrySocketService {
   Stream<SocketConnectionStatus> get statusStream => _statusController.stream;
 
   /// Stream of parsed incoming telemetry payloads.
-  Stream<TelemetrySocketModel> get telemetryStream => _telemetryController.stream;
+  Stream<TelemetrySocketModel> get telemetryStream =>
+      _telemetryController.stream;
 
   /// Stream of all valid incoming JSON messages.
   Stream<Map<String, dynamic>> get rawMessageStream =>
@@ -62,6 +63,17 @@ class TelemetrySocketService {
     }
   }
 
+  /// Sanitizes URL scheme to ws:// or wss://, converting http(s) automatically.
+  static String sanitizeWebSocketUrl(String url) {
+    var sanitized = url.trim();
+    if (sanitized.startsWith('https://')) {
+      sanitized = 'wss://${sanitized.substring(8)}';
+    } else if (sanitized.startsWith('http://')) {
+      sanitized = 'ws://${sanitized.substring(7)}';
+    }
+    return sanitized;
+  }
+
   /// Connects to the telemetry WebSocket endpoint.
   /// If [url] is omitted, [ApiUrls.getTelemetrySocketUrl(token: token)] is used.
   Future<bool> connect({
@@ -69,7 +81,8 @@ class TelemetrySocketService {
     String? token,
     Duration timeout = const Duration(seconds: 8),
   }) async {
-    final targetUrl = url ?? ApiUrls.getTelemetrySocketUrl(token: token);
+    final rawUrl = url ?? ApiUrls.getTelemetrySocketUrl(token: token);
+    final targetUrl = sanitizeWebSocketUrl(rawUrl);
     _activeUrl = targetUrl;
 
     if (isConnected && _activeUrl == targetUrl) {
@@ -84,37 +97,67 @@ class TelemetrySocketService {
     developer.log('Connecting to WebSocket: $targetUrl',
         name: 'TelemetrySocket');
 
-    try {
-      _socket = await WebSocket.connect(targetUrl).timeout(timeout);
-      _updateStatus(SocketConnectionStatus.connected);
-
-      developer.log('Connected to WebSocket successfully.',
-          name: 'TelemetrySocket');
-
-      _socketSubscription = _socket!.listen(
-        (dynamic rawData) {
-          _handleIncomingMessage(rawData);
-        },
-        onError: (dynamic error) {
-          developer.log('WebSocket stream error: $error',
-              name: 'TelemetrySocket', error: error);
-          _updateStatus(SocketConnectionStatus.error, error.toString());
-        },
-        onDone: () {
-          developer.log('WebSocket closed by remote peer.',
-              name: 'TelemetrySocket');
-          _updateStatus(SocketConnectionStatus.disconnected);
-        },
-        cancelOnError: false,
-      );
-
-      return true;
-    } catch (e) {
-      developer.log('WebSocket connection failed: $e',
-          name: 'TelemetrySocket', error: e);
-      _updateStatus(SocketConnectionStatus.error, e.toString());
-      return false;
+    // Build candidates list (e.g. on Android emulator, if localhost fails, fallback to 10.0.2.2)
+    final candidateUrls = <String>[targetUrl];
+    if (Platform.isAndroid && targetUrl.contains('//localhost:')) {
+      candidateUrls.add(targetUrl.replaceAll('//localhost:', '//10.0.2.2:'));
     }
+
+    final headers = <String, dynamic>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    for (final candidate in candidateUrls) {
+      try {
+        developer.log('Attempting WebSocket connection to: $candidate',
+            name: 'TelemetrySocket');
+
+        _socket = await WebSocket.connect(
+          candidate,
+          headers: headers.isNotEmpty ? headers : null,
+        ).timeout(timeout);
+
+        _activeUrl = candidate;
+        _updateStatus(SocketConnectionStatus.connected);
+
+        developer.log('Connected to WebSocket successfully: $candidate',
+            name: 'TelemetrySocket');
+
+        _socketSubscription = _socket!.listen(
+          (dynamic rawData) {
+            _handleIncomingMessage(rawData);
+          },
+          onError: (dynamic error) {
+            developer.log('WebSocket stream error: $error',
+                name: 'TelemetrySocket', error: error);
+            _updateStatus(SocketConnectionStatus.error, error.toString());
+          },
+          onDone: () {
+            developer.log('WebSocket closed by remote peer.',
+                name: 'TelemetrySocket');
+            _updateStatus(SocketConnectionStatus.disconnected);
+          },
+          cancelOnError: false,
+        );
+
+        return true;
+      } catch (e) {
+        developer.log('WebSocket connection failed for $candidate: $e',
+            name: 'TelemetrySocket', error: e);
+      }
+    }
+
+    // All candidates failed
+    String friendlyError = 'WebSocket connection failed';
+    if (_lastError != null) {
+      friendlyError = _lastError!;
+    } else {
+      friendlyError = 'Unable to connect to $targetUrl. Please verify server is reachable.';
+    }
+
+    _updateStatus(SocketConnectionStatus.error, friendlyError);
+    return false;
   }
 
   /// Dispatches a [TelemetrySocketModel] as a JSON string over the WebSocket.
@@ -202,4 +245,3 @@ class TelemetrySocketService {
     _rawMessageController.close();
   }
 }
-

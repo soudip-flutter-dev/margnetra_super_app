@@ -12,4 +12,5 @@ class SharedPrefKeys {
   static const String themeMode = 'theme_mode';
   static const String isFirstTimeUser = 'is_first_time_user';
   static const String isVehicleRegistered = 'is_vehicle_registered';
+  static const String cachedDocuments = 'cached_documents';
 }

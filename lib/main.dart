@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:margnetra_super_app/core/app_page_route/app_page_route.dart';
 import 'package:margnetra_super_app/core/app_services/local_storage/shared_pref_service.dart';
+import 'package:margnetra_super_app/pages/all_nav_pages/digilocker_page/logic/blocs/document_bloc/document_bloc.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/repositories/auth_repository.dart';
 import 'package:margnetra_super_app/pages/auth_page/logic/blocs/auth_bloc/auth_bloc.dart';
 import 'package:margnetra_super_app/pages/profile_page/data/repositories/user_repository.dart';
@@ -49,6 +50,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<SpeedometerSocketBloc>(
           create: (context) => SpeedometerSocketBloc(),
+        ),
+        BlocProvider<DocumentBloc>(
+          create: (context) => DocumentBloc()..add(const LoadVehicleDocumentsEvent()),
         ),
       ],
       child: BlocBuilder<SettingsBloc, SettingsState>(

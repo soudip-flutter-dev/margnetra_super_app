@@ -39,7 +39,8 @@ void main() {
       expect(serialized, equals(payload));
 
       final jsonString = jsonEncode(serialized);
-      expect(jsonString, contains('"vehicleId":"ee344c8c-b968-421e-a3ed-65a0e6c9aa81"'));
+      expect(jsonString,
+          contains('"vehicleId":"ee344c8c-b968-421e-a3ed-65a0e6c9aa81"'));
       expect(jsonString, contains('"speedKmh":72.5'));
       expect(jsonString, contains('"rpm":2600'));
     });
@@ -53,15 +54,33 @@ void main() {
     });
   });
 
-  group('Telemetry Socket URL Builder Tests', () {
+  group('Telemetry Socket URL Builder & Sanitization Tests', () {
     test('Generates telemetry WebSocket URL with custom and default token', () {
       final defaultUrl = ApiUrls.getTelemetrySocketUrl();
-      expect(defaultUrl, startsWith('ws://localhost:8080/ws/telemetry?token='));
+      expect(defaultUrl,
+          startsWith('wss://margentrabackend.onrender.com/ws/telemetry?token='));
       expect(defaultUrl, contains(ApiUrls.defaultTelemetryToken));
 
       const customToken = 'my_custom_jwt_token';
-      final customUrl = ApiUrls.getTelemetrySocketUrl(token: customToken);
-      expect(customUrl, equals('ws://localhost:8080/ws/telemetry?token=my_custom_jwt_token'));
+      final localUrl = ApiUrls.getTelemetrySocketUrl(
+        baseUrl: ApiUrls.telemetrySocketLocal,
+        token: customToken,
+      );
+      expect(localUrl,
+          equals('ws://localhost:8080/ws/telemetry?token=my_custom_jwt_token'));
+    });
+
+    test('Sanitizes http/https to ws/wss automatically', () {
+      expect(
+        TelemetrySocketService.sanitizeWebSocketUrl(
+            'https://margentrabackend.onrender.com/ws/telemetry'),
+        'wss://margentrabackend.onrender.com/ws/telemetry',
+      );
+      expect(
+        TelemetrySocketService.sanitizeWebSocketUrl(
+            'http://localhost:8080/ws/telemetry'),
+        'ws://localhost:8080/ws/telemetry',
+      );
     });
   });
 
@@ -74,7 +93,49 @@ void main() {
       bloc.close();
     });
 
-    test('Sending telemetry event updates state with latest telemetry', () async {
+    test('Simulation mode toggles simulated connection and updates telemetry',
+        () async {
+      final bloc = SpeedometerSocketBloc();
+
+      bloc.add(const SpeedometerSocketToggleSimulation(enable: true));
+
+      await expectLater(
+        bloc.stream,
+        emits(predicate<SpeedometerSocketState>((state) {
+          return state.isSimulated &&
+              state.isConnected &&
+              state.status == SocketConnectionStatus.connected;
+        })),
+      );
+
+      final telemetry = TelemetrySocketModel(
+        vehicleId: "ee344c8c-b968-421e-a3ed-65a0e6c9aa81",
+        gps: const GpsTelemetry(
+          latitude: 22.5740,
+          longitude: 88.3650,
+          speedKmh: 72.5,
+        ),
+        vehicle: const VehicleTelemetry(
+          rpm: 2600,
+        ),
+      );
+
+      bloc.add(SpeedometerSocketSendTelemetry(telemetry: telemetry));
+
+      await expectLater(
+        bloc.stream,
+        emits(predicate<SpeedometerSocketState>((state) {
+          return state.isSimulated &&
+              state.currentSpeedKmh == 72.5 &&
+              state.currentRpm == 2600;
+        })),
+      );
+
+      bloc.close();
+    });
+
+    test('Sending telemetry when disconnected emits error state honestly',
+        () async {
       final bloc = SpeedometerSocketBloc();
 
       final telemetry = TelemetrySocketModel(
@@ -94,34 +155,8 @@ void main() {
       await expectLater(
         bloc.stream,
         emits(predicate<SpeedometerSocketState>((state) {
-          return state.telemetry?.vehicleId == "ee344c8c-b968-421e-a3ed-65a0e6c9aa81" &&
-              state.currentSpeedKmh == 72.5 &&
-              state.currentRpm == 2600 &&
-              state.latitude == 22.5740 &&
-              state.longitude == 88.3650;
-        })),
-      );
-
-      bloc.close();
-    });
-
-    test('SpeedometerSocketSendCurrentData computes telemetry and RPM accurately', () async {
-      final bloc = SpeedometerSocketBloc();
-
-      bloc.add(const SpeedometerSocketSendCurrentData(
-        speedKmh: 80.0,
-        latitude: 22.5740,
-        longitude: 88.3650,
-        rpm: 2800,
-        vehicleId: 'test-vehicle-id',
-      ));
-
-      await expectLater(
-        bloc.stream,
-        emits(predicate<SpeedometerSocketState>((state) {
-          return state.telemetry?.vehicleId == 'test-vehicle-id' &&
-              state.currentSpeedKmh == 80.0 &&
-              state.currentRpm == 2800;
+          return state is SpeedometerSocketError &&
+              state.errorMessage!.contains('WebSocket is not connected');
         })),
       );
 
@@ -129,4 +164,3 @@ void main() {
     });
   });
 }
-

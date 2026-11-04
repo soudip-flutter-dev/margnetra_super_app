@@ -139,18 +139,21 @@ class _SpeedometerScreenState extends State<SpeedometerScreen> with WidgetsBindi
         }
       });
 
-      // Stream real-time telemetry to the WebSocket if vehicle is registered
+      // Stream real-time telemetry to the WebSocket if vehicle is registered and socket is active
       if (_isVehicleRegistered) {
-        final double speedKmh = speedMps * 3.6;
-        final position = _speedService.lastPosition;
+        final socketBloc = context.read<SpeedometerSocketBloc>();
+        if (socketBloc.state.isConnected) {
+          final double speedKmh = speedMps * 3.6;
+          final position = _speedService.lastPosition;
 
-        context.read<SpeedometerSocketBloc>().add(
-              SpeedometerSocketSendCurrentData(
-                speedKmh: double.parse(speedKmh.toStringAsFixed(1)),
-                latitude: position?.latitude,
-                longitude: position?.longitude,
-              ),
-            );
+          socketBloc.add(
+            SpeedometerSocketSendCurrentData(
+              speedKmh: double.parse(speedKmh.toStringAsFixed(1)),
+              latitude: position?.latitude,
+              longitude: position?.longitude,
+            ),
+          );
+        }
       }
     });
 
@@ -203,31 +206,50 @@ class _SpeedometerScreenState extends State<SpeedometerScreen> with WidgetsBindi
         _status != SpeedServiceStatus.checking &&
         _status != SpeedServiceStatus.initial;
 
-    return BlocListener<VehicleBloc, VehicleState>(
-      listener: (context, state) {
-        if (state is VehicleAddSuccess || state is VehicleRegistrationSuccess) {
-          SharedPrefService.instance.setVehicleRegistered(true);
-          setState(() {
-            _isVehicleRegistered = true;
-          });
-          if (_isBottomSheetOpen && Navigator.of(context).canPop()) {
-            Navigator.of(context, rootNavigator: true).maybePop(true);
-          }
-        } else if (state is VehicleLoaded) {
-          final isReg = state.vehicles.isNotEmpty || SharedPrefService.instance.isVehicleRegistered;
-          if (isReg) {
-            SharedPrefService.instance.setVehicleRegistered(true);
-            if (_isBottomSheetOpen && Navigator.of(context).canPop()) {
-              Navigator.of(context, rootNavigator: true).maybePop(true);
-            }
-            if (!_isVehicleRegistered) {
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<VehicleBloc, VehicleState>(
+          listener: (context, state) {
+            if (state is VehicleAddSuccess || state is VehicleRegistrationSuccess) {
+              SharedPrefService.instance.setVehicleRegistered(true);
               setState(() {
                 _isVehicleRegistered = true;
               });
+              if (_isBottomSheetOpen && Navigator.of(context).canPop()) {
+                Navigator.of(context, rootNavigator: true).maybePop(true);
+              }
+            } else if (state is VehicleLoaded) {
+              final isReg = state.vehicles.isNotEmpty || SharedPrefService.instance.isVehicleRegistered;
+              if (isReg) {
+                SharedPrefService.instance.setVehicleRegistered(true);
+                if (_isBottomSheetOpen && Navigator.of(context).canPop()) {
+                  Navigator.of(context, rootNavigator: true).maybePop(true);
+                }
+                if (!_isVehicleRegistered) {
+                  setState(() {
+                    _isVehicleRegistered = true;
+                  });
+                }
+              }
             }
-          }
-        }
-      },
+          },
+        ),
+        BlocListener<SpeedometerSocketBloc, SpeedometerSocketState>(
+          listener: (context, socketState) {
+            if (_isVehicleRegistered && socketState.telemetry != null) {
+              final telemetrySpeedMps = socketState.telemetry!.gps.speedKmh / 3.6;
+              if (socketState.isSimulated || (_currentSpeedMps <= 0.0 && telemetrySpeedMps > 0.0)) {
+                setState(() {
+                  _currentSpeedMps = telemetrySpeedMps;
+                  if (telemetrySpeedMps > _maxSpeedMps) {
+                    _maxSpeedMps = telemetrySpeedMps;
+                  }
+                });
+              }
+            }
+          },
+        ),
+      ],
       child: Scaffold(
         backgroundColor: const Color(0xFF010A12),
         appBar: AppBar(

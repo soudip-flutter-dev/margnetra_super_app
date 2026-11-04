@@ -9,6 +9,7 @@ abstract class SpeedometerSocketState extends Equatable {
   final int packetsSent;
   final int packetsReceived;
   final String? activeVehicleId;
+  final bool isSimulated;
 
   const SpeedometerSocketState({
     this.status = SocketConnectionStatus.disconnected,
@@ -17,9 +18,11 @@ abstract class SpeedometerSocketState extends Equatable {
     this.packetsSent = 0,
     this.packetsReceived = 0,
     this.activeVehicleId,
+    this.isSimulated = false,
   });
 
-  bool get isConnected => status == SocketConnectionStatus.connected;
+  bool get isConnected =>
+      status == SocketConnectionStatus.connected || isSimulated;
   bool get isConnecting => status == SocketConnectionStatus.connecting;
 
   double get currentSpeedKmh => telemetry?.gps.speedKmh ?? 0.0;
@@ -35,6 +38,7 @@ abstract class SpeedometerSocketState extends Equatable {
         packetsSent,
         packetsReceived,
         activeVehicleId,
+        isSimulated,
       ];
 }
 
@@ -51,6 +55,7 @@ class SpeedometerSocketConnecting extends SpeedometerSocketState {
     super.packetsSent,
     super.packetsReceived,
     super.activeVehicleId,
+    super.isSimulated,
   }) : super(status: SocketConnectionStatus.connecting);
 }
 
@@ -61,6 +66,7 @@ class SpeedometerSocketConnected extends SpeedometerSocketState {
     super.packetsSent,
     super.packetsReceived,
     super.activeVehicleId,
+    super.isSimulated,
   }) : super(status: SocketConnectionStatus.connected);
 }
 
@@ -68,10 +74,13 @@ class SpeedometerSocketConnected extends SpeedometerSocketState {
 class SpeedometerSocketDataUpdated extends SpeedometerSocketState {
   const SpeedometerSocketDataUpdated({
     required super.telemetry,
+    super.status = SocketConnectionStatus.connected,
     super.packetsSent,
     super.packetsReceived,
     super.activeVehicleId,
-  }) : super(status: SocketConnectionStatus.connected);
+    super.errorMessage,
+    super.isSimulated,
+  });
 }
 
 /// Socket has been disconnected.
@@ -81,6 +90,7 @@ class SpeedometerSocketDisconnected extends SpeedometerSocketState {
     super.packetsSent,
     super.packetsReceived,
     super.activeVehicleId,
+    super.isSimulated,
   }) : super(status: SocketConnectionStatus.disconnected);
 }
 
@@ -92,9 +102,9 @@ class SpeedometerSocketError extends SpeedometerSocketState {
     super.packetsSent,
     super.packetsReceived,
     super.activeVehicleId,
+    super.isSimulated,
   }) : super(
           status: SocketConnectionStatus.error,
           errorMessage: errorMessage,
         );
 }
-

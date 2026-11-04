@@ -30,6 +30,16 @@ class SpeedometerSocketDisconnect extends SpeedometerSocketEvent {
   const SpeedometerSocketDisconnect();
 }
 
+/// Toggles offline simulated telemetry mode for testing without a live backend.
+class SpeedometerSocketToggleSimulation extends SpeedometerSocketEvent {
+  final bool enable;
+
+  const SpeedometerSocketToggleSimulation({required this.enable});
+
+  @override
+  List<Object?> get props => [enable];
+}
+
 /// Dispatches an explicit [TelemetrySocketModel] packet over the socket.
 class SpeedometerSocketSendTelemetry extends SpeedometerSocketEvent {
   final TelemetrySocketModel telemetry;
