@@ -16,14 +16,22 @@ class ApiUrls {
   static const String forgotPassword = '/api/auth/forgot-password';
   static const String resetPassword = '/api/auth/reset-password';
   static const String refreshToken = '/api/auth/refresh';
+  
 
 // ------vehicle api--------------
    static const String vehicleRegistration = "/api/vehicles";
 
   //  ----------vehicle document section--------------
   static const String vehicleDocuments = "/api/documents";
+
+//    ------------- wallet api------------
+  static const String walletDashboard = "/api/wallet/summary";
+  static const String transactionListBase = "/api/wallet/transactions";
+  static String transactionList({int page = 1, int size = 10}) =>
+      "/api/wallet/transactions?page=$page&size=$size";
   // ── Profile / User endpoints ───────────────────────────────────────────────
   static const String userProfile = '/api/auth/me';
+  static const String userProfileUpdate = '/api/user/profile';
   
   // ── Telemetry WebSocket endpoints ──────────────────────────────────────────
   static const String defaultTelemetryToken =

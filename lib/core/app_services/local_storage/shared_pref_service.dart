@@ -138,6 +138,12 @@ class SharedPrefService {
     }
   }
 
+  Future<bool> saveCachedWalletDashboard(Map<String, dynamic> data) async =>
+      await setJson(SharedPrefKeys.cachedWalletDashboard, data);
+
+  Map<String, dynamic>? getCachedWalletDashboard() =>
+      getJson(SharedPrefKeys.cachedWalletDashboard);
+
   Future<bool> saveRegisteredVehicle(Map<String, dynamic> vehicle) async {
     await setJson(SharedPrefKeys.registeredVehicle, vehicle);
     await setBool(SharedPrefKeys.isVehicleRegistered, true);

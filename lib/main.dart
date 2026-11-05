@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:margnetra_super_app/core/app_page_route/app_page_route.dart';
 import 'package:margnetra_super_app/core/app_services/local_storage/shared_pref_service.dart';
 import 'package:margnetra_super_app/pages/all_nav_pages/digilocker_page/logic/blocs/document_bloc/document_bloc.dart';
+import 'package:margnetra_super_app/pages/all_nav_pages/wallet_page/logic/blocs/wallet_bloc/wallet_bloc.dart';
 import 'package:margnetra_super_app/pages/auth_page/data/repositories/auth_repository.dart';
 import 'package:margnetra_super_app/pages/auth_page/logic/blocs/auth_bloc/auth_bloc.dart';
 import 'package:margnetra_super_app/pages/profile_page/data/repositories/user_repository.dart';
@@ -53,6 +54,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<DocumentBloc>(
           create: (context) => DocumentBloc()..add(const LoadVehicleDocumentsEvent()),
+        ),
+        BlocProvider<WalletBloc>(
+          create: (context) => WalletBloc()..add(const LoadWalletDashboardEvent()),
         ),
       ],
       child: BlocBuilder<SettingsBloc, SettingsState>(

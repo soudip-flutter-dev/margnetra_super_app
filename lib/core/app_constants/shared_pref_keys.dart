@@ -13,4 +13,5 @@ class SharedPrefKeys {
   static const String isFirstTimeUser = 'is_first_time_user';
   static const String isVehicleRegistered = 'is_vehicle_registered';
   static const String cachedDocuments = 'cached_documents';
+  static const String cachedWalletDashboard = 'cached_wallet_dashboard';
 }
