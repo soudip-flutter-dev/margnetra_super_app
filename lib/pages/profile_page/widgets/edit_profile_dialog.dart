@@ -24,6 +24,7 @@ class EditProfileDialog extends StatefulWidget {
 }
 
 class _EditProfileDialogState extends State<EditProfileDialog> {
+  late final TextEditingController _usernameController;
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   final _formKey = GlobalKey<FormState>();
@@ -31,12 +32,17 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   @override
   void initState() {
     super.initState();
+    final initialUsername = widget.profile.username.isNotEmpty
+        ? widget.profile.username
+        : widget.profile.fullName;
+    _usernameController = TextEditingController(text: initialUsername);
     _nameController = TextEditingController(text: widget.profile.fullName);
     _emailController = TextEditingController(text: widget.profile.email);
   }
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     super.dispose();
@@ -44,10 +50,17 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 
   void _save() {
     if (_formKey.currentState?.validate() ?? false) {
+      final username = _usernameController.text.trim();
+      final fullName = _nameController.text.trim();
+      final email = _emailController.text.trim();
+
       context.read<ProfileBloc>().add(
             UpdateProfileEvent(
-              fullName: _nameController.text.trim(),
-              email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+              username: username.isNotEmpty ? username : fullName,
+              fullName: fullName.isNotEmpty ? fullName : username,
+              email: email.isEmpty ? null : email,
+              effectiveName: fullName.isNotEmpty ? fullName : username,
+              cleanEmail: email.isEmpty ? null : email.toLowerCase(),
             ),
           );
       CustomSnackBar.showSuccess(context, 'Profile updated successfully');
@@ -78,47 +91,67 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
       ),
       content: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _nameController,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: InputDecoration(
-                labelText: 'Full Name',
-                labelStyle: const TextStyle(color: mutedText),
-                filled: true,
-                fillColor: const Color(0xFF181820),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: borderColor),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _usernameController,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  labelStyle: const TextStyle(color: mutedText),
+                  filled: true,
+                  fillColor: const Color(0xFF181820),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: borderColor),
+                  ),
                 ),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Enter username' : null,
               ),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your name' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: InputDecoration(
-                labelText: 'Email Address',
-                labelStyle: const TextStyle(color: mutedText),
-                filled: true,
-                fillColor: const Color(0xFF181820),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: borderColor),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _nameController,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Full Name',
+                  labelStyle: const TextStyle(color: mutedText),
+                  filled: true,
+                  fillColor: const Color(0xFF181820),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: borderColor),
+                  ),
                 ),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Enter your name' : null,
               ),
-              validator: (v) {
-                if (v != null && v.trim().isNotEmpty && !v.contains('@')) {
-                  return 'Enter valid email address';
-                }
-                return null;
-              },
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Email Address',
+                  labelStyle: const TextStyle(color: mutedText),
+                  filled: true,
+                  fillColor: const Color(0xFF181820),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: borderColor),
+                  ),
+                ),
+                validator: (v) {
+                  if (v != null && v.trim().isNotEmpty && !v.contains('@')) {
+                    return 'Enter valid email address';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
         ),
       ),
       actions: [

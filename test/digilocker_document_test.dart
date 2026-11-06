@@ -57,8 +57,9 @@ class MockDocumentRepository implements IDocumentRepository {
 
   @override
   Future<VehicleDocumentUploadResponseModel> uploadVehicleDocument(
-    VehicleDocumentUploadRequestModel request,
-  ) async {
+    VehicleDocumentUploadRequestModel request, {
+    String? endpoint,
+  }) async {
     if (shouldUploadFail) {
       throw Exception('Network error during upload');
     }
@@ -235,6 +236,36 @@ void main() {
       final serialized = response.toJson();
       expect(serialized['success'], isTrue);
       expect(serialized['data']['documentType'], 'RC');
+    });
+
+    test('Parses VehicleDocumentUploadResponseModel matching 2026-11-06 user response', () {
+      final jsonResponse = {
+        "success": true,
+        "message": "User registered successfully",
+        "data": {
+          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "documentType": "RC",
+          "title": "string",
+          "documentNumber": "string",
+          "status": "VALID",
+          "statusText": "string",
+          "expiryDate": "2026-11-06",
+          "formattedExpiry": "string",
+          "daysUntilExpiry": 0,
+          "fileUrl": "string",
+          "expiringSoon": true,
+          "verified": true
+        }
+      };
+
+      final response = VehicleDocumentUploadResponseModel.fromJson(jsonResponse);
+      expect(response.success, isTrue);
+      expect(response.message, "User registered successfully");
+      expect(response.id, "3fa85f64-5717-4562-b3fc-2c963f66afa6");
+      expect(response.documentType, "RC");
+      expect(response.expiryDate, "2026-11-06");
+      expect(response.expiringSoon, isTrue);
+      expect(response.verified, isTrue);
     });
   });
 

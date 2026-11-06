@@ -72,6 +72,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       final updated = await _userRepository.updateUserProfile(
         fullName: event.fullName,
         email: event.email,
+        username: event.username,
+        effectiveName: event.effectiveName,
+        cleanEmail: event.cleanEmail,
+        request: event.request,
       );
 
       if (currentState is ProfileLoaded) {

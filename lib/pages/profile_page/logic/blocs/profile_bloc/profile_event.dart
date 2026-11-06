@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:margnetra_super_app/pages/profile_page/data/models/user_profile_update_request_model.dart';
 
 abstract class ProfileEvent extends Equatable {
   const ProfileEvent();
@@ -18,11 +19,29 @@ class LoadProfileEvent extends ProfileEvent {
 class UpdateProfileEvent extends ProfileEvent {
   final String? fullName;
   final String? email;
+  final String? username;
+  final String? effectiveName;
+  final String? cleanEmail;
+  final UserProfileUpdateRequestModel? request;
 
-  const UpdateProfileEvent({this.fullName, this.email});
+  const UpdateProfileEvent({
+    this.fullName,
+    this.email,
+    this.username,
+    this.effectiveName,
+    this.cleanEmail,
+    this.request,
+  });
 
   @override
-  List<Object?> get props => [fullName, email];
+  List<Object?> get props => [
+        fullName,
+        email,
+        username,
+        effectiveName,
+        cleanEmail,
+        request,
+      ];
 }
 
 class UploadAvatarEvent extends ProfileEvent {

@@ -6,8 +6,9 @@ import 'package:margnetra_super_app/pages/all_nav_pages/digilocker_page/data/mod
 abstract class IDocumentRepository {
   Future<VehicleDocumentsResponseModel> getVehicleDocuments({String? vehicleId});
   Future<VehicleDocumentUploadResponseModel> uploadVehicleDocument(
-    VehicleDocumentUploadRequestModel request,
-  );
+    VehicleDocumentUploadRequestModel request, {
+    String? endpoint,
+  });
   List<VehicleDocumentModel>? getCachedDocuments();
 }
 
@@ -50,10 +51,12 @@ class DocumentRepository implements IDocumentRepository {
 
   @override
   Future<VehicleDocumentUploadResponseModel> uploadVehicleDocument(
-    VehicleDocumentUploadRequestModel request,
-  ) async {
+    VehicleDocumentUploadRequestModel request, {
+    String? endpoint,
+  }) async {
+    final targetUrl = endpoint ?? ApiUrls.vehicleDocuments;
     final response = await _dataProvider.post(
-      ApiUrls.vehicleDocuments,
+      targetUrl,
       data: request.toJson(),
     );
 
@@ -64,7 +67,10 @@ class DocumentRepository implements IDocumentRepository {
     // If successfully uploaded and returned data is present, update local cache
     if (result.data != null) {
       final currentDocs = getCachedDocuments() ?? [];
-      final updatedDocs = [result.data!, ...currentDocs];
+      final updatedDocs = [
+        result.data!,
+        ...currentDocs.where((d) => d.id != result.data!.id),
+      ];
       await _prefService.saveCachedDocuments(
         updatedDocs.map((doc) => doc.toJson()).toList(),
       );

@@ -38,15 +38,50 @@ class MockUserRepository implements IUserRepository {
   }
 
   @override
-  Future<UserProfileModel> updateUserProfile({String? fullName, String? email}) async {
+  Future<UserProfileUpdateResponseModel> updateProfile(
+    UserProfileUpdateRequestModel request,
+  ) async {
+    return UserProfileUpdateResponseModel(
+      success: true,
+      message: 'User registered successfully',
+      data: Data(
+        userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        fullName: request.fullName ?? 'Amit Sharma',
+        phoneNumber: '+919876543210',
+        email: request.email ?? 'amit.sharma@example.com',
+        civilScore: 0,
+        maxCivilScore: 0,
+        civilRating: 'Good',
+        scorePercent: 0,
+        vehiclesCount: 0,
+        vehiclesCountText: '0 Vehicles',
+        paymentMethodsText: 'None',
+        username: request.username ?? 'Amit Sharma',
+      ),
+    );
+  }
+
+  @override
+  Future<UserProfileModel> updateUserProfile({
+    String? fullName,
+    String? email,
+    String? username,
+    String? effectiveName,
+    String? cleanEmail,
+    UserProfileUpdateRequestModel? request,
+  }) async {
+    final effectiveUsername = username ?? request?.username ?? fullName ?? 'Amit Sharma';
+    final effectiveFullName = fullName ?? request?.fullName ?? 'Amit Sharma';
+    final effectiveEmail = email ?? request?.email ?? 'amit.sharma@example.com';
     return UserProfileModel(
       success: true,
       message: 'Profile updated',
       data: Data(
         userId: '1',
-        fullName: fullName ?? 'Alice Test',
+        fullName: effectiveFullName,
+        username: effectiveUsername,
         phoneNumber: '+919876543210',
-        email: email ?? 'alice@test.com',
+        email: effectiveEmail,
         civilScore: 82,
       ),
     );
@@ -212,6 +247,118 @@ void main() {
       final sDecoded = AppSettingsModel.fromJson(sJson);
       expect(sDecoded.darkMode, true);
       expect(sDecoded.language, 'hi');
+    });
+
+    test('Parses user profile API response correctly matching backend contract', () {
+      final jsonResponse = {
+        "success": true,
+        "message": "User profile retrieved successfully",
+        "data": {
+          "userId": "a8a49e7c-9cf2-4cd1-977d-89c7503aeaf5",
+          "fullName": "Chandsii Solanki",
+          "phoneNumber": "+919831674368",
+          "email": "chandsi@gmail.com",
+          "civilScore": 750,
+          "maxCivilScore": 1000,
+          "civilRating": "Good Driver. Maintain safe speeds.",
+          "scorePercent": 0.75,
+          "vehiclesCount": 2,
+          "vehiclesCountText": "2 Vehicles",
+          "paymentMethodsText": "UPI, Cards",
+          "username": "Chandsii Solanki"
+        }
+      };
+
+      final profile = UserProfileModel.fromJson(jsonResponse);
+      expect(profile.success, isTrue);
+      expect(profile.message, "User profile retrieved successfully");
+      expect(profile.userId, "a8a49e7c-9cf2-4cd1-977d-89c7503aeaf5");
+      expect(profile.fullName, "Chandsii Solanki");
+      expect(profile.username, "Chandsii Solanki");
+      expect(profile.phoneNumber, "+919831674368");
+      expect(profile.email, "chandsi@gmail.com");
+      expect(profile.civilScore, 750);
+      expect(profile.maxCivilScore, 1000);
+      expect(profile.civilRating, "Good Driver. Maintain safe speeds.");
+      expect(profile.scorePercent, 0.75);
+      expect(profile.vehiclesCount, 2);
+      expect(profile.vehiclesCountText, "2 Vehicles");
+      expect(profile.paymentMethodsText, "UPI, Cards");
+
+      final serialized = profile.toJson();
+      expect(serialized['success'], isTrue);
+      expect(serialized['data']['username'], "Chandsii Solanki");
+    });
+
+    test('Parses UserProfileUpdateRequestModel and UserProfileUpdateResponseModel correctly', () {
+      final reqJson = {
+        "username": "Amit Sharma",
+        "fullName": "Amit Sharma",
+        "email": "amit.sharma@example.com",
+        "effectiveName": "string",
+        "cleanEmail": "string"
+      };
+
+      final reqModel = UserProfileUpdateRequestModel.fromJson(reqJson);
+      expect(reqModel.username, "Amit Sharma");
+      expect(reqModel.fullName, "Amit Sharma");
+      expect(reqModel.email, "amit.sharma@example.com");
+      expect(reqModel.effectiveName, "string");
+      expect(reqModel.cleanEmail, "string");
+
+      final reqSerialized = reqModel.toJson();
+      expect(reqSerialized['username'], "Amit Sharma");
+      expect(reqSerialized['fullName'], "Amit Sharma");
+      expect(reqSerialized['email'], "amit.sharma@example.com");
+
+      final resJson = {
+        "success": true,
+        "message": "User registered successfully",
+        "data": {
+          "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "fullName": "string",
+          "phoneNumber": "string",
+          "email": "string",
+          "civilScore": 0,
+          "maxCivilScore": 0,
+          "civilRating": "string",
+          "scorePercent": 0,
+          "vehiclesCount": 0,
+          "vehiclesCountText": "string",
+          "paymentMethodsText": "string",
+          "username": "Amit Sharma"
+        }
+      };
+
+      final resModel = UserProfileUpdateResponseModel.fromJson(resJson);
+      expect(resModel.success, isTrue);
+      expect(resModel.message, "User registered successfully");
+      expect(resModel.userId, "3fa85f64-5717-4562-b3fc-2c963f66afa6");
+      expect(resModel.username, "Amit Sharma");
+      expect(resModel.fullName, "string");
+      expect(resModel.civilScore, 0);
+
+      final userProfile = resModel.toUserProfileModel();
+      expect(userProfile.userId, "3fa85f64-5717-4562-b3fc-2c963f66afa6");
+      expect(userProfile.username, "Amit Sharma");
+    });
+
+    test('ProfileBloc handles UpdateProfileEvent with UserProfileUpdateRequestModel', () async {
+      final bloc = ProfileBloc(userRepository: mockRepo);
+      final states = <ProfileState>[];
+      final sub = bloc.stream.listen(states.add);
+
+      bloc.add(const UpdateProfileEvent(
+        username: 'Amit Sharma',
+        fullName: 'Amit Sharma',
+        email: 'amit.sharma@example.com',
+      ));
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      expect(states.any((s) => s is ProfileLoaded && s.profile.username == 'Amit Sharma'), isTrue);
+
+      await sub.cancel();
+      await bloc.close();
     });
 
     test('ProfileBloc emits cached state then refreshed state from API', () async {

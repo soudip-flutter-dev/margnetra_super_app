@@ -9,6 +9,7 @@ import 'package:margnetra_super_app/pages/all_nav_pages/digilocker_page/widgets/
 ///
 /// Designed to be embedded inside an existing navigation shell.
 class DigiLockerWidget extends StatefulWidget {
+
   const DigiLockerWidget({super.key});
 
   @override
@@ -24,10 +25,12 @@ class _DigiLockerWidgetState extends State<DigiLockerWidget> {
   static const Color _cardBorder = Color(0xFF242731);
 
   static const Color _white = Color(0xFFF5F7FA);
+
   static const Color _mutedText = Color(0xFF858A96);
 
   static const Color _cyan = Color(0xFF00D9E8);
   static const Color _cyanDark = Color(0xFF00AFC0);
+  
 
   static const Color _validGreen = Color(0xFF35D58A);
   static const Color _warningOrange = Color(0xFFFFA62B);
@@ -824,3 +827,6 @@ class _DocumentTypeMeta {
     required this.defaultTitle,
   });
 }
+
+/// Convenience alias allowing the page to be imported as DigiLockerPage or DigiLockerWidget
+typedef DigiLockerPage = DigiLockerWidget;

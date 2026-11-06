@@ -32,7 +32,32 @@ class VehicleDocumentUploadResponseModel extends Equatable {
     };
   }
 
+  VehicleDocumentUploadResponseModel copyWith({
+    bool? success,
+    String? message,
+    VehicleDocumentModel? data,
+  }) {
+    return VehicleDocumentUploadResponseModel(
+      success: success ?? this.success,
+      message: message ?? this.message,
+      data: data ?? this.data,
+    );
+  }
+
+  // ── Convenience getters directly matching response fields ───────────────────
+  String get id => data?.id ?? '';
+  String get documentType => data?.documentType ?? '';
+  String get title => data?.title ?? '';
+  String get documentNumber => data?.documentNumber ?? '';
+  String get status => data?.status ?? 'VALID';
+  String get statusText => data?.statusText ?? '';
+  String get expiryDate => data?.expiryDate ?? '';
+  String get formattedExpiry => data?.formattedExpiry ?? '';
+  int get daysUntilExpiry => data?.daysUntilExpiry ?? 0;
+  String get fileUrl => data?.fileUrl ?? '';
+  bool get expiringSoon => data?.expiringSoon ?? false;
+  bool get verified => data?.verified ?? false;
+
   @override
   List<Object?> get props => [success, message, data];
 }
-

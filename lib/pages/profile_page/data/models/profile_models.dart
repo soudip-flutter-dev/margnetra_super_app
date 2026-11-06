@@ -1,4 +1,6 @@
 export 'user_profile_model.dart';
+export 'user_profile_update_request_model.dart';
+export 'user_profile_update_response_model.dart';
 export 'vehicle_model.dart';
 export 'vehicle_registration_request_model.dart';
 export 'vehicle_registration_response_model.dart';

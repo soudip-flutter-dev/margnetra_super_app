@@ -23,6 +23,8 @@ class ApiUrls {
 
   //  ----------vehicle document section--------------
   static const String vehicleDocuments = "/api/documents";
+  static const String vehicleDocumentUpload = "/api/documents/upload";
+  static const String vehicleDocumentsUpload = "/api/documents/upload";
 
 //    ------------- wallet api------------
   static const String walletDashboard = "/api/wallet/summary";
@@ -30,7 +32,7 @@ class ApiUrls {
   static String transactionList({int page = 1, int size = 10}) =>
       "/api/wallet/transactions?page=$page&size=$size";
   // ── Profile / User endpoints ───────────────────────────────────────────────
-  static const String userProfile = '/api/auth/me';
+  static const String userProfile = '/api/user/profile';
   static const String userProfileUpdate = '/api/user/profile';
   
   // ── Telemetry WebSocket endpoints ──────────────────────────────────────────

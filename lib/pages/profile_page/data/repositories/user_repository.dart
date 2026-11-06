@@ -5,7 +5,17 @@ import 'package:margnetra_super_app/pages/profile_page/data/models/profile_model
 
 abstract class IUserRepository {
   Future<UserProfileModel> getUserProfile();
-  Future<UserProfileModel> updateUserProfile({String? fullName, String? email});
+  Future<UserProfileModel> updateUserProfile({
+    String? fullName,
+    String? email,
+    String? username,
+    String? effectiveName,
+    String? cleanEmail,
+    UserProfileUpdateRequestModel? request,
+  });
+  Future<UserProfileUpdateResponseModel> updateProfile(
+    UserProfileUpdateRequestModel request,
+  );
   Future<UserProfileModel> uploadAvatar(String filePath);
   Future<CivilScoreModel> getCivilScore();
   Future<List<VehicleModel>> getVehicles();
@@ -34,7 +44,7 @@ class UserRepository implements IUserRepository {
   })  : _dataProvider = dataProvider ?? DataProvider(),
         _prefService = prefService ?? SharedPrefService.instance;
 
-  // ── GET /api/auth/me ───────────────────────────────────────────────────────
+  // ── GET ApiUrls.userProfile ──────────────────────────────────────────────────
   @override
   Future<UserProfileModel> getUserProfile() async {
     final response = await _dataProvider.get(ApiUrls.userProfile);
@@ -43,24 +53,92 @@ class UserRepository implements IUserRepository {
     final profile = UserProfileModel.fromJson(map);
 
     // Cache for offline access
-    await _prefService.saveUserData(profile.toJson());
-    if (profile.vehiclesCount > 0) {
-      await _prefService.setVehicleRegistered(true);
+    if (profile.data != null) {
+      await _prefService.saveUserData(profile.toJson());
+      if (profile.vehiclesCount > 0) {
+        await _prefService.setVehicleRegistered(true);
+      }
+      if (profile.userId.isNotEmpty) {
+        await _prefService.saveUserId(profile.userId);
+      }
     }
     return profile;
+  }
+
+  // ── PUT ApiUrls.userProfileUpdate ───────────────────────────────────────────
+  @override
+  Future<UserProfileUpdateResponseModel> updateProfile(
+    UserProfileUpdateRequestModel request,
+  ) async {
+    final response = await _dataProvider.put(
+      ApiUrls.userProfileUpdate,
+      data: request.toJson(),
+    );
+
+    final map =
+        response is Map<String, dynamic> ? response : <String, dynamic>{};
+    final updateResponse = UserProfileUpdateResponseModel.fromJson(map);
+
+    final updatedProfile = updateResponse.toUserProfileModel();
+    if (updatedProfile.data != null) {
+      await _prefService.saveUserData(updatedProfile.toJson());
+      if (updatedProfile.userId.isNotEmpty) {
+        await _prefService.saveUserId(updatedProfile.userId);
+      }
+    }
+
+    return updateResponse;
   }
 
   @override
   Future<UserProfileModel> updateUserProfile({
     String? fullName,
     String? email,
+    String? username,
+    String? effectiveName,
+    String? cleanEmail,
+    UserProfileUpdateRequestModel? request,
   }) async {
     final cached = getCachedProfile();
+    final effectiveUsername =
+        username ?? fullName ?? cached?.username ?? cached?.fullName ?? '';
+    final effectiveFullName =
+        fullName ?? username ?? cached?.fullName ?? cached?.username ?? '';
+    final effectiveEmail = email ?? cached?.email ?? '';
+
+    final req = request ??
+        UserProfileUpdateRequestModel(
+          username: effectiveUsername.isNotEmpty ? effectiveUsername : null,
+          fullName: effectiveFullName.isNotEmpty ? effectiveFullName : null,
+          email: effectiveEmail.isNotEmpty ? effectiveEmail : null,
+          effectiveName: effectiveName ??
+              (effectiveFullName.isNotEmpty
+                  ? effectiveFullName
+                  : (effectiveUsername.isNotEmpty ? effectiveUsername : null)),
+          cleanEmail: cleanEmail ??
+              (effectiveEmail.isNotEmpty
+                  ? effectiveEmail.trim().toLowerCase()
+                  : null),
+        );
+
+    try {
+      final updateResponse = await updateProfile(req);
+      final profile = updateResponse.toUserProfileModel();
+      if (profile.data != null) {
+        return profile;
+      }
+    } catch (_) {
+      // Fallback locally if network fails or offline
+    }
+
     final updatedData = Data(
       userId: cached?.userId,
-      fullName: fullName ?? cached?.fullName,
+      fullName:
+          effectiveFullName.isNotEmpty ? effectiveFullName : cached?.fullName,
+      username:
+          effectiveUsername.isNotEmpty ? effectiveUsername : cached?.username,
       phoneNumber: cached?.phoneNumber,
-      email: email ?? cached?.email,
+      email: effectiveEmail.isNotEmpty ? effectiveEmail : cached?.email,
       civilScore: cached?.civilScore,
       maxCivilScore: cached?.maxCivilScore,
       civilRating: cached?.civilRating,

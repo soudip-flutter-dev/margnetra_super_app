@@ -352,7 +352,10 @@ class ProfileWidget extends StatelessWidget {
     final int maxScore = profile?.maxCivilScore ?? 1000;
     final String rating = profile?.civilRating ?? 'N/A';
     final double percent = profile?.scorePercent ?? 0.0;
-    final double factor = (percent / 100.0).clamp(0.0, 1.0);
+    final double factor = (percent > 1.0
+            ? percent / 100.0
+            : (percent > 0.0 ? percent : (maxScore > 0 ? score / maxScore : 0.0)))
+        .clamp(0.0, 1.0);
     final int vehicles = profile?.vehiclesCount ?? 0;
     final String paymentsText = profile?.paymentMethodsText ?? 'Add Method';
 
@@ -389,7 +392,7 @@ class ProfileWidget extends StatelessWidget {
                   border: Border.all(color: primaryGreen.withAlpha(80)),
                 ),
                 child: Text(
-                  rating,
+                  rating.contains('.') ? rating.split('.').first.trim() : rating,
                   style: const TextStyle(
                       color: primaryGreen,
                       fontSize: 11,
@@ -412,7 +415,9 @@ class ProfileWidget extends StatelessWidget {
                         color: cyan, size: 12),
                     const SizedBox(width: 4),
                     Text(
-                      '$vehicles Vehicles',
+                      profile?.vehiclesCountText.isNotEmpty == true
+                          ? profile!.vehiclesCountText
+                          : '$vehicles Vehicles',
                       style: const TextStyle(
                           color: cyan,
                           fontSize: 11,
@@ -454,9 +459,11 @@ class ProfileWidget extends StatelessWidget {
           const SizedBox(height: 8),
 
           Text(
-            score >= 800
-                ? 'Exceptional Driver! Top reward tier unlocked.'
-                : 'Good Driver! Maintain speed limits to earn more.',
+            rating.isNotEmpty && rating != 'N/A'
+                ? rating
+                : (score >= 800
+                    ? 'Exceptional Driver! Top reward tier unlocked.'
+                    : 'Good Driver! Maintain speed limits to earn more.'),
             style: const TextStyle(
                 color: primaryGreen,
                 fontSize: 12.5,

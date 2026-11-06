@@ -11,7 +11,9 @@ class UserProfileModel extends Equatable {
     return UserProfileModel(
       success: json['success'] as bool?,
       message: json['message'] as String?,
-      data: json['data'] != null ? Data.fromJson(json['data']) : null,
+      data: json['data'] is Map<String, dynamic>
+          ? Data.fromJson(json['data'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -23,9 +25,22 @@ class UserProfileModel extends Equatable {
     return map;
   }
 
+  UserProfileModel copyWith({
+    bool? success,
+    String? message,
+    Data? data,
+  }) {
+    return UserProfileModel(
+      success: success ?? this.success,
+      message: message ?? this.message,
+      data: data ?? this.data,
+    );
+  }
+
   // ── Convenience getters so widgets don't need to drill into .data ──
 
   String get fullName => data?.fullName ?? '';
+  String get username => data?.username ?? fullName;
   String get phoneNumber => data?.phoneNumber ?? '';
   String get email => data?.email ?? '';
   int get civilScore => data?.civilScore ?? 0;
@@ -33,7 +48,8 @@ class UserProfileModel extends Equatable {
   String get civilRating => data?.civilRating ?? 'N/A';
   double get scorePercent => data?.scorePercent ?? 0.0;
   int get vehiclesCount => data?.vehiclesCount ?? 0;
-  String get vehiclesCountText => data?.vehiclesCountText ?? '0 Registered';
+  String get vehiclesCountText =>
+      data?.vehiclesCountText ?? '$vehiclesCount Vehicles';
   String get paymentMethodsText => data?.paymentMethodsText ?? 'Add Method';
   String get userId => data?.userId ?? '';
 
@@ -53,6 +69,7 @@ class Data extends Equatable {
   final int? vehiclesCount;
   final String? vehiclesCountText;
   final String? paymentMethodsText;
+  final String? username;
 
   const Data({
     this.userId,
@@ -66,13 +83,14 @@ class Data extends Equatable {
     this.vehiclesCount,
     this.vehiclesCountText,
     this.paymentMethodsText,
+    this.username,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) {
     return Data(
-      userId: json['userId']?.toString(),
-      fullName: json['fullName']?.toString(),
-      phoneNumber: json['phoneNumber']?.toString(),
+      userId: (json['userId'] ?? json['id'] ?? json['_id'])?.toString(),
+      fullName: (json['fullName'] ?? json['name'])?.toString(),
+      phoneNumber: (json['phoneNumber'] ?? json['phone'])?.toString(),
       email: json['email']?.toString(),
       civilScore: json['civilScore'] is int
           ? json['civilScore'] as int
@@ -89,6 +107,7 @@ class Data extends Equatable {
           : int.tryParse(json['vehiclesCount']?.toString() ?? '0'),
       vehiclesCountText: json['vehiclesCountText']?.toString(),
       paymentMethodsText: json['paymentMethodsText']?.toString(),
+      username: (json['username'] ?? json['fullName'] ?? json['name'])?.toString(),
     );
   }
 
@@ -104,7 +123,38 @@ class Data extends Equatable {
         'vehiclesCount': vehiclesCount,
         'vehiclesCountText': vehiclesCountText,
         'paymentMethodsText': paymentMethodsText,
+        'username': username,
       };
+
+  Data copyWith({
+    String? userId,
+    String? fullName,
+    String? phoneNumber,
+    String? email,
+    int? civilScore,
+    int? maxCivilScore,
+    String? civilRating,
+    double? scorePercent,
+    int? vehiclesCount,
+    String? vehiclesCountText,
+    String? paymentMethodsText,
+    String? username,
+  }) {
+    return Data(
+      userId: userId ?? this.userId,
+      fullName: fullName ?? this.fullName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      email: email ?? this.email,
+      civilScore: civilScore ?? this.civilScore,
+      maxCivilScore: maxCivilScore ?? this.maxCivilScore,
+      civilRating: civilRating ?? this.civilRating,
+      scorePercent: scorePercent ?? this.scorePercent,
+      vehiclesCount: vehiclesCount ?? this.vehiclesCount,
+      vehiclesCountText: vehiclesCountText ?? this.vehiclesCountText,
+      paymentMethodsText: paymentMethodsText ?? this.paymentMethodsText,
+      username: username ?? this.username,
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -119,5 +169,6 @@ class Data extends Equatable {
         vehiclesCount,
         vehiclesCountText,
         paymentMethodsText,
+        username,
       ];
 }

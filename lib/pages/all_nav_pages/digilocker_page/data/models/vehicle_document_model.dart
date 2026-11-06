@@ -32,10 +32,26 @@ class VehicleDocumentModel extends Equatable {
 
   /// Factory constructor to parse JSON with safe defaults.
   factory VehicleDocumentModel.fromJson(Map<String, dynamic> json) {
+    final docType = json['documentType']?.toString() ?? '';
+    final rawTitle = json['title']?.toString();
+    final isPlaceholder =
+        rawTitle == null || rawTitle.isEmpty || rawTitle == 'string';
+    final friendlyTitle = isPlaceholder
+        ? (docType == 'RC'
+            ? 'Registration Certificate (RC)'
+            : docType == 'PUCC'
+                ? 'Pollution Certificate (PUCC)'
+                : docType == 'INSURANCE'
+                    ? 'Motor Insurance Policy'
+                    : docType == 'DL'
+                        ? 'Driving Licence'
+                        : (docType.isNotEmpty ? docType : 'Vehicle Document'))
+        : rawTitle;
+
     return VehicleDocumentModel(
       id: json['id']?.toString() ?? '',
-      documentType: json['documentType']?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
+      documentType: docType,
+      title: friendlyTitle,
       documentNumber: json['documentNumber']?.toString() ?? '',
       status: json['status']?.toString() ?? 'VALID',
       statusText: json['statusText']?.toString() ?? '',
